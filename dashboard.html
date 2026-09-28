@@ -6,8 +6,8 @@
 <meta charset="UTF-8">
 
 <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0"
+  name="viewport"
+  content="width=device-width, initial-scale=1.0"
 >
 
 <title>RK RAJA XWD</title>
@@ -15,286 +15,469 @@
 <style>
 
 * {
-    box-sizing: border-box;
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  min-height: 100%;
+  background: #020504;
+  color: #00ff88;
+  font-family:
+    Consolas,
+    "Courier New",
+    monospace;
 }
 
 body {
-    margin: 0;
-    background: #020504;
-    color: #00ff73;
-    font-family: monospace;
+  overflow-x: hidden;
 }
 
-body:before {
-    content: "";
-    position: fixed;
-    inset: 0;
-    pointer-events: none;
+/* MATRIX BACKGROUND */
 
-    background:
-        repeating-linear-gradient(
-            0deg,
-            rgba(0,255,100,.025),
-            rgba(0,255,100,.025) 1px,
-            transparent 1px,
-            transparent 4px
-        );
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
 
-    z-index: 5;
+  background:
+    linear-gradient(
+      rgba(0, 255, 100, 0.025) 1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      90deg,
+      rgba(0, 255, 100, 0.025) 1px,
+      transparent 1px
+    );
+
+  background-size: 35px 35px;
+
+  pointer-events: none;
+
+  z-index: -2;
 }
 
-.container {
-    width: min(1000px, 94%);
-    margin: auto;
-    padding: 18px 0 40px;
+body::after {
+  content: "";
+
+  position: fixed;
+  inset: 0;
+
+  background:
+    radial-gradient(
+      circle at center,
+      rgba(0,255,120,.06),
+      transparent 55%
+    );
+
+  pointer-events: none;
+
+  z-index: -1;
 }
+
+/* HEADER */
 
 .header {
-    border: 1px solid #00ff73;
-    border-radius: 18px;
-    padding: 30px 15px;
-    text-align: center;
+  padding: 22px 16px;
 
-    background: rgba(0,20,10,.8);
+  text-align: center;
 
-    box-shadow:
-        0 0 25px rgba(0,255,100,.15),
-        inset 0 0 25px rgba(0,255,100,.04);
+  border-bottom:
+    1px solid rgba(0,255,120,.2);
+
+  background:
+    rgba(0,10,7,.85);
+
+  box-shadow:
+    0 0 30px
+    rgba(0,255,100,.06);
 }
 
 .logo {
-    font-size: clamp(30px,8vw,58px);
-    font-weight: bold;
-    letter-spacing: 4px;
+  font-size: 30px;
+  font-weight: 900;
+  letter-spacing: 4px;
 
-    text-shadow:
-        0 0 10px #00ff73,
-        0 0 30px #00ff73;
+  color: #00ff88;
+
+  text-shadow:
+    0 0 8px #00ff88,
+    0 0 25px rgba(0,255,100,.5);
 }
 
 .subtitle {
-    margin-top: 10px;
-    color: #7dffad;
-    letter-spacing: 4px;
+  margin-top: 7px;
+
+  font-size: 11px;
+
+  color: #58c996;
+
+  letter-spacing: 2px;
 }
 
+/* CONTAINER */
+
+.container {
+  width: min(1050px, 94%);
+
+  margin:
+    22px auto
+    50px;
+}
+
+/* GRID */
+
+.grid {
+  display: grid;
+
+  grid-template-columns:
+    repeat(
+      auto-fit,
+      minmax(300px, 1fr)
+    );
+
+  gap: 16px;
+}
+
+/* CARD */
+
+.card {
+  border:
+    1px solid
+    rgba(0,255,120,.2);
+
+  background:
+    rgba(2,14,9,.88);
+
+  border-radius: 14px;
+
+  padding: 18px;
+
+  box-shadow:
+    0 0 25px
+    rgba(0,255,100,.04);
+
+  backdrop-filter:
+    blur(8px);
+}
+
+.card h2 {
+  margin:
+    0 0 15px;
+
+  font-size: 15px;
+
+  color: #00ff88;
+
+  letter-spacing: 1px;
+}
+
+/* STATUS */
+
 .status {
-    margin-top: 18px;
+  display: flex;
 
-    border: 1px solid #164d2d;
-    border-radius: 14px;
+  align-items: center;
 
-    padding: 18px;
+  gap: 10px;
 
-    background: rgba(0,15,8,.8);
+  margin-bottom: 15px;
 }
 
 .dot {
-    display: inline-block;
+  width: 12px;
+  height: 12px;
 
-    width: 12px;
-    height: 12px;
+  border-radius: 50%;
 
-    border-radius: 50%;
+  background: #ff3030;
 
-    background: #777;
-
-    margin-right: 8px;
+  box-shadow:
+    0 0 10px
+    #ff3030;
 }
 
 .dot.online {
-    background: #00ff73;
+  background: #00ff88;
 
-    box-shadow:
-        0 0 10px #00ff73,
-        0 0 25px #00ff73;
+  box-shadow:
+    0 0 12px
+    #00ff88;
 }
 
-.grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 18px;
-    margin-top: 18px;
+.statusText {
+  font-weight: bold;
 }
 
-.panel {
-    border: 1px solid #14552f;
-    border-radius: 15px;
-    padding: 20px;
+/* INPUTS */
 
-    background: rgba(0,15,8,.86);
+label {
+  display: block;
+
+  margin:
+    13px 0 6px;
+
+  font-size: 11px;
+
+  color: #64dba5;
+
+  text-transform:
+    uppercase;
+
+  letter-spacing: 1px;
 }
 
-.title {
-    color: #c0ffd7;
-    letter-spacing: 3px;
-    margin-bottom: 18px;
+input,
+textarea,
+button {
+  font-family:
+    Consolas,
+    "Courier New",
+    monospace;
 }
 
 input,
 textarea {
-    width: 100%;
+  width: 100%;
 
-    background: #010302;
+  border:
+    1px solid
+    rgba(0,255,120,.22);
 
-    border: 1px solid #176136;
-    border-radius: 9px;
+  background:
+    #020906;
 
-    color: #00ff73;
+  color: #baffd9;
 
-    padding: 13px;
+  border-radius: 9px;
 
-    outline: none;
+  padding: 12px;
 
-    font-family: monospace;
-
-    margin-bottom: 12px;
-}
-
-textarea {
-    min-height: 130px;
-    resize: vertical;
+  outline: none;
 }
 
 input:focus,
 textarea:focus {
-    border-color: #00ff73;
+  border-color:
+    #00ff88;
 
-    box-shadow:
-        0 0 12px rgba(0,255,100,.2);
+  box-shadow:
+    0 0 10px
+    rgba(0,255,120,.12);
 }
 
+textarea {
+  min-height: 120px;
+
+  resize: vertical;
+}
+
+/* BUTTON */
+
 button {
-    width: 100%;
+  width: 100%;
 
-    border: 1px solid #00ff73;
-    border-radius: 9px;
+  margin-top: 12px;
 
-    background: #031b0d;
+  padding: 12px;
 
-    color: #00ff73;
+  border: 0;
 
-    padding: 13px;
+  border-radius: 9px;
 
-    font-family: monospace;
-    font-weight: bold;
+  background:
+    #00c96b;
 
-    cursor: pointer;
+  color: #001b0d;
 
-    margin-top: 5px;
+  font-weight: 900;
+
+  cursor: pointer;
+
+  transition: .2s;
 }
 
 button:hover {
-    background: #06351a;
+  background: #00ff88;
 
-    box-shadow:
-        0 0 15px rgba(0,255,100,.3);
+  box-shadow:
+    0 0 20px
+    rgba(0,255,120,.25);
 }
 
-.codebox {
-    text-align: center;
+button.danger {
+  background:
+    #18221d;
 
-    border: 1px dashed #176136;
+  color: #ff7070;
 
-    border-radius: 12px;
-
-    padding: 28px 10px;
-
-    margin-top: 10px;
+  border:
+    1px solid
+    rgba(255,80,80,.25);
 }
 
-.code {
-    font-size: 38px;
-    letter-spacing: 8px;
-    font-weight: bold;
+/* PAIRING */
 
-    text-shadow:
-        0 0 10px #00ff73,
-        0 0 25px #00ff73;
+.pairCode {
+  min-height: 58px;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  margin-top: 15px;
+
+  padding: 10px;
+
+  border:
+    1px dashed
+    rgba(0,255,120,.35);
+
+  border-radius: 10px;
+
+  font-size: 23px;
+
+  letter-spacing: 5px;
+
+  font-weight: bold;
+
+  color: #ffffff;
+
+  background:
+    rgba(0,255,100,.025);
 }
 
-.file {
-    border: 1px dashed #176136;
-    padding: 15px;
-    border-radius: 9px;
-    margin-bottom: 12px;
+/* FILE */
+
+.fileBox {
+  border:
+    1px dashed
+    rgba(0,255,120,.25);
+
+  padding: 12px;
+
+  border-radius: 10px;
+
+  margin-top: 10px;
 }
 
-.json-status {
-    font-size: 12px;
-    margin-top: 10px;
-    color: #777;
-}
-
-.json-status.loaded {
-    color: #00ff73;
-}
+/* STATS */
 
 .stats {
-    display: grid;
-    grid-template-columns: repeat(3,1fr);
-    gap: 10px;
+  display: grid;
+
+  grid-template-columns:
+    repeat(2, 1fr);
+
+  gap: 10px;
 }
 
 .stat {
-    text-align: center;
-    border: 1px solid #123e24;
-    border-radius: 10px;
-    padding: 15px;
+  padding: 15px;
+
+  border:
+    1px solid
+    rgba(0,255,120,.15);
+
+  border-radius: 10px;
+
+  background:
+    rgba(0,255,100,.025);
+
+  text-align: center;
 }
 
-.stat b {
-    display: block;
-    font-size: 25px;
-    margin-top: 8px;
+.statValue {
+  font-size: 24px;
+
+  font-weight: bold;
+
+  color: #fff;
 }
+
+.statLabel {
+  margin-top: 5px;
+
+  font-size: 10px;
+
+  color: #57bd91;
+}
+
+/* TERMINAL */
 
 .terminal {
-    height: 260px;
-    overflow-y: auto;
+  height: 280px;
 
-    background: #000;
+  overflow-y: auto;
 
-    border: 1px solid #12351f;
-    border-radius: 10px;
+  padding: 14px;
 
-    padding: 13px;
+  background:
+    #000;
 
-    font-size: 12px;
+  border-radius: 10px;
 
-    line-height: 1.8;
+  border:
+    1px solid
+    rgba(0,255,120,.18);
+
+  color: #50ff9b;
+
+  font-size: 12px;
+
+  line-height: 1.65;
+
+  white-space: pre-wrap;
 }
 
-.log {
-    word-break: break-word;
+/* JSON */
+
+.jsonArea {
+  min-height: 150px;
 }
 
-.log:before {
-    content: "> ";
-    color: #00ff73;
+/* HELP */
+
+.help {
+  margin-top: 8px;
+
+  color: #527b67;
+
+  font-size: 10px;
+
+  line-height: 1.5;
 }
 
-.full {
-    grid-column: 1 / -1;
+/* FOOTER */
+
+.footer {
+  text-align: center;
+
+  color: #28543d;
+
+  font-size: 10px;
+
+  padding: 20px;
 }
 
-@media(max-width:700px) {
+@media (max-width: 600px) {
 
-    .grid {
-        grid-template-columns: 1fr;
-    }
+  .logo {
+    font-size: 23px;
+  }
 
-    .full {
-        grid-column: auto;
-    }
+  .container {
+    width: 94%;
+  }
 
-    .stats {
-        grid-template-columns: 1fr;
-    }
-
-    .logo {
-        letter-spacing: 2px;
-    }
+  .grid {
+    grid-template-columns: 1fr;
+  }
 
 }
 
@@ -304,598 +487,1060 @@ button:hover {
 
 <body>
 
-<div class="container">
-
 <header class="header">
 
-    <div class="logo">
-        RK RAJA XWD
-    </div>
+  <div class="logo">
+    RK RAJA XWD
+  </div>
 
-    <div class="subtitle">
-        // SECURE CONTROL TERMINAL //
-    </div>
+  <div class="subtitle">
+    WHATSAPP CONTROL PANEL
+  </div>
 
 </header>
 
 
-<div class="status">
+<main class="container">
 
-    <span id="dot" class="dot"></span>
+  <div class="grid">
 
-    STATUS:
-    <span id="status">
-        CONNECTING...
-    </span>
+    <!-- CONNECTION -->
 
-</div>
+    <section class="card">
 
+      <h2>
+        [01] WHATSAPP CONNECTION
+      </h2>
 
-<div class="grid">
+      <div class="status">
 
+        <span
+          id="statusDot"
+          class="dot"
+        ></span>
 
-<!-- LOGIN -->
+        <span
+          id="statusText"
+          class="statusText"
+        >
+          DISCONNECTED
+        </span>
 
-<section class="panel">
+      </div>
 
-<div class="title">
-[ WHATSAPP LOGIN ]
-</div>
+      <label>
+        WhatsApp Number
+      </label>
 
-<input
-    id="phone"
-    placeholder="+91 9876543210"
-    type="tel"
->
+      <input
+        id="phone"
+        type="tel"
+        placeholder="919876543210"
+      >
 
-<button onclick="pair()">
-    GENERATE PAIRING CODE
-</button>
+      <div class="help">
+        Country code ke saath number
+        enter karo. +, spaces aur -
+        ki zarurat nahi.
+      </div>
 
-<div class="codebox">
+      <button
+        onclick="generatePairingCode()"
+      >
+        GENERATE PAIRING CODE
+      </button>
 
-    <div>
-        PAIRING CODE
-    </div>
-
-    <div
-        id="code"
-        class="code"
-    >
+      <div
+        id="pairCode"
+        class="pairCode"
+      >
         ----
-    </div>
+      </div>
 
-    <small>
+      <div class="help">
         WhatsApp → Linked Devices →
-        Link with phone number
-    </small>
+        Link with phone number par
+        pairing code enter karo.
+      </div>
 
-</div>
-
-</section>
-
-
-<!-- JSON -->
-
-<section class="panel">
-
-<div class="title">
-[ SESSION JSON ]
-</div>
-
-<div class="file">
-
-<input
-    id="jsonFile"
-    type="file"
-    accept=".json,application/json"
->
-
-<button onclick="uploadJSON()">
-    UPLOAD JSON
-</button>
-
-</div>
-
-<div>
-    OR PASTE JSON
-</div>
-
-<textarea
-    id="jsonText"
-    placeholder='{"example":"value"}'
-></textarea>
-
-<button onclick="pasteJSON()">
-    LOAD PASTED JSON
-</button>
-
-<button onclick="clearJSON()">
-    CLEAR
-</button>
-
-<div
-    id="jsonStatus"
-    class="json-status"
->
-    ● JSON: NOT LOADED
-</div>
-
-</section>
+    </section>
 
 
-<!-- MESSAGE -->
+    <!-- JSON -->
 
-<section class="panel">
+    <section class="card">
 
-<div class="title">
-[ SEND MESSAGE ]
-</div>
+      <h2>
+        [02] JSON
+      </h2>
 
-<input
-    id="recipient"
-    placeholder="Number / Group UID"
->
+      <label>
+        Upload JSON File
+      </label>
 
-<input
-    id="header"
-    value="RK RAJA XWD"
-    placeholder="Header Name"
->
+      <div class="fileBox">
 
-<textarea
-    id="message"
-    placeholder="Message..."
-></textarea>
+        <input
+          id="jsonFile"
+          type="file"
+          accept=".json,application/json"
+        >
 
-<label>
-TXT File
-</label>
+        <button
+          onclick="uploadJSON()"
+        >
+          UPLOAD JSON
+        </button>
 
-<input
-    id="txtFile"
-    type="file"
-    accept=".txt"
->
+      </div>
 
-<label>
-Send Time
-</label>
+      <label>
+        Or Paste JSON
+      </label>
 
-<input
-    id="sendTime"
-    type="time"
->
+      <textarea
+        id="jsonPaste"
+        class="jsonArea"
+        placeholder='{"example":"value"}'
+      ></textarea>
 
-<button onclick="sendMessage()">
-    SEND MESSAGE
-</button>
+      <button
+        onclick="pasteJSON()"
+      >
+        LOAD PASTED JSON
+      </button>
 
-</section>
+      <button
+        class="danger"
+        onclick="clearJSON()"
+      >
+        CLEAR JSON
+      </button>
 
+      <div
+        id="jsonStatus"
+        class="help"
+      >
+        JSON: NOT LOADED
+      </div>
 
-<!-- DASHBOARD -->
-
-<section class="panel">
-
-<div class="title">
-[ DASHBOARD ]
-</div>
-
-<div class="stats">
-
-<div class="stat">
-Connection
-<b id="connectionStat">
-OFF
-</b>
-</div>
-
-<div class="stat">
-Sent
-<b id="sent">
-0
-</b>
-</div>
-
-<div class="stat">
-Failed
-<b id="failed">
-0
-</b>
-</div>
-
-</div>
-
-</section>
+    </section>
 
 
-<!-- TERMINAL -->
+    <!-- MESSAGE -->
 
-<section class="panel full">
+    <section class="card">
 
-<div class="title">
-[ SYSTEM TERMINAL ]
-</div>
+      <h2>
+        [03] MESSAGE
+      </h2>
 
-<div
-    id="terminal"
-    class="terminal"
-></div>
+      <label>
+        Group UID / WhatsApp Number
+      </label>
 
-</section>
+      <input
+        id="recipient"
+        type="text"
+        placeholder="120363xxxxxxxx@g.us"
+      >
 
-</div>
+      <div class="help">
+        Group ke liye @g.us wala Group UID
+        use kar sakte ho.
+      </div>
 
-</div>
+
+      <label>
+        Here Name
+      </label>
+
+      <input
+        id="hereName"
+        type="text"
+        placeholder="RK RAJA"
+      >
+
+      <div class="help">
+        Jo naam yahan doge, message ke
+        beginning mein show hoga.
+      </div>
+
+
+      <label>
+        Message
+      </label>
+
+      <textarea
+        id="message"
+        placeholder="Apna message yahan likho..."
+      ></textarea>
+
+
+      <label>
+        Send Time
+      </label>
+
+      <input
+        id="sendTime"
+        type="datetime-local"
+      >
+
+      <div class="help">
+        Abhi send karne ke liye field
+        blank bhi chhod sakte ho.
+      </div>
+
+
+      <button
+        onclick="sendMessage()"
+      >
+        SEND MESSAGE
+      </button>
+
+    </section>
+
+
+    <!-- TXT -->
+
+    <section class="card">
+
+      <h2>
+        [04] TXT FILE
+      </h2>
+
+      <label>
+        Upload TXT
+      </label>
+
+      <div class="fileBox">
+
+        <input
+          id="txtFile"
+          type="file"
+          accept=".txt,text/plain"
+        >
+
+        <button
+          onclick="uploadTXT()"
+        >
+          LOAD TXT
+        </button>
+
+      </div>
+
+      <div
+        id="txtStatus"
+        class="help"
+      >
+        TXT: NOT LOADED
+      </div>
+
+    </section>
+
+
+    <!-- STATS -->
+
+    <section class="card">
+
+      <h2>
+        [05] DASHBOARD
+      </h2>
+
+      <div class="stats">
+
+        <div class="stat">
+
+          <div
+            id="sentCount"
+            class="statValue"
+          >
+            0
+          </div>
+
+          <div class="statLabel">
+            SENT
+          </div>
+
+        </div>
+
+        <div class="stat">
+
+          <div
+            id="failedCount"
+            class="statValue"
+          >
+            0
+          </div>
+
+          <div class="statLabel">
+            FAILED
+          </div>
+
+        </div>
+
+        <div class="stat">
+
+          <div
+            id="connectionState"
+            class="statValue"
+          >
+            OFF
+          </div>
+
+          <div class="statLabel">
+            CONNECTION
+          </div>
+
+        </div>
+
+        <div class="stat">
+
+          <div
+            id="jsonState"
+            class="statValue"
+          >
+            OFF
+          </div>
+
+          <div class="statLabel">
+            JSON
+          </div>
+
+        </div>
+
+      </div>
+
+    </section>
+
+
+    <!-- TERMINAL -->
+
+    <section class="card">
+
+      <h2>
+        [06] LIVE TERMINAL
+      </h2>
+
+      <div
+        id="terminal"
+        class="terminal"
+      >RK RAJA XWD SYSTEM READY...
+Connecting event stream...</div>
+
+    </section>
+
+  </div>
+
+</main>
+
+
+<footer class="footer">
+  RK RAJA XWD • Dashboard
+</footer>
 
 
 <script>
 
-/* =====================================================
-   HELPERS
-===================================================== */
+/* ==========================================
+   ELEMENTS
+========================================== */
 
-function show(message) {
-    alert(message);
+const terminal =
+  document.getElementById("terminal");
+
+const statusDot =
+  document.getElementById("statusDot");
+
+const statusText =
+  document.getElementById("statusText");
+
+const pairCode =
+  document.getElementById("pairCode");
+
+const sentCount =
+  document.getElementById("sentCount");
+
+const failedCount =
+  document.getElementById("failedCount");
+
+const connectionState =
+  document.getElementById("connectionState");
+
+const jsonState =
+  document.getElementById("jsonState");
+
+const jsonStatus =
+  document.getElementById("jsonStatus");
+
+
+/* ==========================================
+   TERMINAL
+========================================== */
+
+function addLog(message) {
+
+  terminal.textContent +=
+    "\n" + message;
+
+  terminal.scrollTop =
+    terminal.scrollHeight;
 }
 
 
-/* =====================================================
-   PAIR
-===================================================== */
+/* ==========================================
+   STATUS
+========================================== */
 
-async function pair() {
+function updateStatus(data) {
 
-    const phone =
-        document.getElementById("phone").value;
+  const connected =
+    !!data.connected;
 
-    if (!phone.trim()) {
-        show("Phone number enter karo.");
-        return;
-    }
+  if (connected) {
+
+    statusDot.classList.add(
+      "online"
+    );
+
+    statusText.textContent =
+      "CONNECTED";
+
+    connectionState.textContent =
+      "ON";
+
+  } else {
+
+    statusDot.classList.remove(
+      "online"
+    );
+
+    statusText.textContent =
+      "DISCONNECTED";
+
+    connectionState.textContent =
+      "OFF";
+  }
+
+  if (
+    typeof data.sentCount !==
+    "undefined"
+  ) {
+    sentCount.textContent =
+      data.sentCount;
+  }
+
+  if (
+    typeof data.failedCount !==
+    "undefined"
+  ) {
+    failedCount.textContent =
+      data.failedCount;
+  }
+
+  if (
+    typeof data.jsonLoaded !==
+    "undefined"
+  ) {
+
+    jsonState.textContent =
+      data.jsonLoaded
+        ? "ON"
+        : "OFF";
+
+    jsonStatus.textContent =
+      data.jsonLoaded
+        ? "JSON: LOADED"
+        : "JSON: NOT LOADED";
+  }
+
+  if (data.pairingCode) {
+
+    pairCode.textContent =
+      data.pairingCode;
+  }
+}
+
+
+/* ==========================================
+   SSE
+========================================== */
+
+const events =
+  new EventSource("/events");
+
+events.onmessage =
+  function(event) {
 
     try {
 
-        const response =
-            await fetch("/api/pair", {
-                method: "POST",
+      const data =
+        JSON.parse(event.data);
 
-                headers: {
-                    "Content-Type":
-                        "application/json"
-                },
+      if (data.type === "status") {
 
-                body: JSON.stringify({
-                    phone
-                })
-            });
+        updateStatus(data);
 
-        const data =
-            await response.json();
+      } else if (
+        data.type === "pairing"
+      ) {
 
-        if (!data.ok) {
-            show(data.error || "Pairing failed.");
-            return;
-        }
+        pairCode.textContent =
+          data.code;
 
-        if (data.code) {
-            document.getElementById("code")
-                .textContent = data.code;
-        }
+        addLog(
+          "Pairing code: " +
+          data.code
+        );
 
-    } catch (error) {
+      } else if (
+        data.type === "log"
+      ) {
 
-        show("Server connection failed.");
+        addLog(data.message);
 
+      } else if (
+        data.type === "message_sent"
+      ) {
+
+        sentCount.textContent =
+          data.sentCount;
+
+        addLog(
+          "MESSAGE SENT -> " +
+          data.recipient
+        );
+
+      } else if (
+        data.type === "message_failed"
+      ) {
+
+        failedCount.textContent =
+          data.failedCount;
+
+      } else if (
+        data.type === "json"
+      ) {
+
+        jsonState.textContent =
+          data.loaded
+            ? "ON"
+            : "OFF";
+
+        jsonStatus.textContent =
+          data.loaded
+            ? "JSON: LOADED"
+            : "JSON: NOT LOADED";
+      }
+
+    } catch (err) {
+
+      console.error(err);
     }
+  };
+
+
+/* ==========================================
+   PAIRING
+========================================== */
+
+async function generatePairingCode() {
+
+  const phone =
+    document
+      .getElementById("phone")
+      .value
+      .trim();
+
+  if (!phone) {
+
+    alert(
+      "WhatsApp number enter karo."
+    );
+
+    return;
+  }
+
+  pairCode.textContent =
+    "WAIT...";
+
+  addLog(
+    "Requesting pairing code..."
+  );
+
+  try {
+
+    const response =
+      await fetch(
+        "/api/pair",
+        {
+          method: "POST",
+
+          headers: {
+            "Content-Type":
+              "application/json"
+          },
+
+          body: JSON.stringify({
+            phone
+          })
+        }
+      );
+
+    const data =
+      await response.json();
+
+    if (!response.ok) {
+
+      throw new Error(
+        data.error ||
+        "Pairing failed."
+      );
+    }
+
+    if (data.code) {
+
+      pairCode.textContent =
+        data.code;
+
+      addLog(
+        "PAIRING CODE: " +
+        data.code
+      );
+
+    } else {
+
+      addLog(
+        data.message ||
+        "Pairing request completed."
+      );
+    }
+
+  } catch (err) {
+
+    pairCode.textContent =
+      "ERROR";
+
+    addLog(
+      "ERROR: " +
+      err.message
+    );
+
+    alert(err.message);
+  }
 }
 
 
-/* =====================================================
+/* ==========================================
    JSON PASTE
-===================================================== */
+========================================== */
 
 async function pasteJSON() {
 
-    const json =
-        document.getElementById("jsonText")
-            .value;
+  const json =
+    document
+      .getElementById("jsonPaste")
+      .value
+      .trim();
 
-    if (!json.trim()) {
-        show("JSON paste karo.");
-        return;
-    }
+  if (!json) {
+
+    alert(
+      "JSON paste karo."
+    );
+
+    return;
+  }
+
+  try {
 
     const response =
-        await fetch("/api/json/paste", {
+      await fetch(
+        "/api/json/paste",
+        {
+          method: "POST",
 
-            method: "POST",
+          headers: {
+            "Content-Type":
+              "application/json"
+          },
 
-            headers: {
-                "Content-Type":
-                    "application/json"
-            },
-
-            body: JSON.stringify({
-                json
-            })
-        });
+          body: JSON.stringify({
+            json
+          })
+        }
+      );
 
     const data =
-        await response.json();
+      await response.json();
 
-    if (!data.ok) {
-        show(data.error);
-        return;
+    if (!response.ok) {
+
+      throw new Error(
+        data.error ||
+        "JSON failed."
+      );
     }
 
-    document.getElementById("jsonStatus")
-        .textContent =
-        "● JSON: LOADED";
+    jsonState.textContent =
+      "ON";
 
-    document.getElementById("jsonStatus")
-        .classList.add("loaded");
+    jsonStatus.textContent =
+      "JSON: LOADED";
 
-    show("JSON successfully loaded.");
+    addLog(
+      "JSON pasted successfully."
+    );
+
+  } catch (err) {
+
+    alert(err.message);
+
+    addLog(
+      "JSON ERROR: " +
+      err.message
+    );
+  }
 }
 
 
-/* =====================================================
+/* ==========================================
    JSON UPLOAD
-===================================================== */
+========================================== */
 
 async function uploadJSON() {
 
-    const input =
-        document.getElementById("jsonFile");
+  const file =
+    document
+      .getElementById("jsonFile")
+      .files[0];
 
-    if (!input.files.length) {
-        show("JSON file select karo.");
-        return;
-    }
+  if (!file) {
 
-    const form =
-        new FormData();
-
-    form.append(
-        "jsonFile",
-        input.files[0]
+    alert(
+      "JSON file select karo."
     );
 
+    return;
+  }
+
+  const formData =
+    new FormData();
+
+  formData.append(
+    "jsonFile",
+    file
+  );
+
+  try {
+
     const response =
-        await fetch("/api/json/upload", {
-            method: "POST",
-            body: form
-        });
+      await fetch(
+        "/api/json/upload",
+        {
+          method: "POST",
+          body: formData
+        }
+      );
 
     const data =
-        await response.json();
+      await response.json();
 
-    if (!data.ok) {
-        show(data.error);
-        return;
+    if (!response.ok) {
+
+      throw new Error(
+        data.error ||
+        "Upload failed."
+      );
     }
 
-    document.getElementById("jsonStatus")
-        .textContent =
-        "● JSON: LOADED";
+    jsonState.textContent =
+      "ON";
 
-    document.getElementById("jsonStatus")
-        .classList.add("loaded");
+    jsonStatus.textContent =
+      "JSON: LOADED";
 
-    show("JSON file loaded.");
+    addLog(
+      "JSON uploaded: " +
+      data.filename
+    );
+
+  } catch (err) {
+
+    alert(err.message);
+
+    addLog(
+      "JSON ERROR: " +
+      err.message
+    );
+  }
 }
 
 
-/* =====================================================
+/* ==========================================
    CLEAR JSON
-===================================================== */
+========================================== */
 
 async function clearJSON() {
 
-    await fetch("/api/json/clear", {
-        method: "POST"
-    });
+  try {
 
-    document.getElementById("jsonText")
-        .value = "";
+    const response =
+      await fetch(
+        "/api/json/clear",
+        {
+          method: "POST"
+        }
+      );
 
-    document.getElementById("jsonFile")
-        .value = "";
+    const data =
+      await response.json();
 
-    document.getElementById("jsonStatus")
-        .textContent =
-        "● JSON: NOT LOADED";
+    if (!response.ok) {
 
-    document.getElementById("jsonStatus")
-        .classList.remove("loaded");
+      throw new Error(
+        data.error ||
+        "Clear failed."
+      );
+    }
+
+    jsonState.textContent =
+      "OFF";
+
+    jsonStatus.textContent =
+      "JSON: NOT LOADED";
+
+    document
+      .getElementById("jsonPaste")
+      .value = "";
+
+    addLog(
+      "JSON cleared."
+    );
+
+  } catch (err) {
+
+    alert(err.message);
+  }
 }
 
 
-/* =====================================================
-   TXT FILE
-===================================================== */
+/* ==========================================
+   TXT
+========================================== */
 
-document.getElementById("txtFile")
-    .addEventListener("change", async function() {
+async function uploadTXT() {
 
-        if (!this.files.length) return;
+  const file =
+    document
+      .getElementById("txtFile")
+      .files[0];
 
-        const file =
-            this.files[0];
+  if (!file) {
 
-        const text =
-            await file.text();
+    alert(
+      "TXT file select karo."
+    );
 
-        document.getElementById("message")
-            .value = text;
+    return;
+  }
 
-    });
+  const formData =
+    new FormData();
+
+  formData.append(
+    "txtFile",
+    file
+  );
+
+  try {
+
+    const response =
+      await fetch(
+        "/api/txt/upload",
+        {
+          method: "POST",
+          body: formData
+        }
+      );
+
+    const data =
+      await response.json();
+
+    if (!response.ok) {
+
+      throw new Error(
+        data.error ||
+        "TXT upload failed."
+      );
+    }
+
+    document
+      .getElementById("txtStatus")
+      .textContent =
+      `TXT: ${data.lines} lines loaded`;
+
+    addLog(
+      `TXT loaded: ${data.filename} (${data.lines} lines)`
+    );
+
+  } catch (err) {
+
+    alert(err.message);
+
+    addLog(
+      "TXT ERROR: " +
+      err.message
+    );
+  }
+}
 
 
-/* =====================================================
-   SEND
-===================================================== */
+/* ==========================================
+   SEND MESSAGE
+========================================== */
 
 async function sendMessage() {
 
-    const recipient =
-        document.getElementById("recipient")
-            .value;
+  const recipient =
+    document
+      .getElementById("recipient")
+      .value
+      .trim();
 
-    const header =
-        document.getElementById("header")
-            .value;
+  const hereName =
+    document
+      .getElementById("hereName")
+      .value
+      .trim();
 
-    const message =
-        document.getElementById("message")
-            .value;
+  const message =
+    document
+      .getElementById("message")
+      .value
+      .trim();
 
-    if (!recipient.trim()) {
-        show("Recipient / Group UID enter karo.");
-        return;
+  const sendTime =
+    document
+      .getElementById("sendTime")
+      .value;
+
+  if (!recipient) {
+
+    alert(
+      "Group UID / WhatsApp number enter karo."
+    );
+
+    return;
+  }
+
+  if (!message) {
+
+    alert(
+      "Message enter karo."
+    );
+
+    return;
+  }
+
+  /*
+    Send Time blank:
+    immediately send.
+
+    Future time:
+    is simple dashboard version
+    sends immediately only when
+    the button is pressed.
+  */
+
+  if (sendTime) {
+
+    const selected =
+      new Date(sendTime);
+
+    if (
+      !Number.isNaN(
+        selected.getTime()
+      ) &&
+      selected > new Date()
+    ) {
+
+      alert(
+        "Scheduled sending ke liye server-side scheduler configure karna hoga. Abhi SEND MESSAGE button immediate send karta hai."
+      );
+
+      return;
     }
+  }
 
-    if (!message.trim()) {
-        show("Message enter karo.");
-        return;
-    }
+  try {
 
     const response =
-        await fetch("/api/message", {
+      await fetch(
+        "/api/message",
+        {
+          method: "POST",
 
-            method: "POST",
+          headers: {
+            "Content-Type":
+              "application/json"
+          },
 
-            headers: {
-                "Content-Type":
-                    "application/json"
-            },
-
-            body: JSON.stringify({
-                recipient,
-                header,
-                message
-            })
-        });
+          body: JSON.stringify({
+            recipient,
+            hereName,
+            message
+          })
+        }
+      );
 
     const data =
-        await response.json();
+      await response.json();
 
-    if (!data.ok) {
-        show(data.error);
-        return;
+    if (!response.ok) {
+
+      throw new Error(
+        data.error ||
+        "Message send failed."
+      );
     }
 
-    show("Message sent.");
+    addLog(
+      "Message sent successfully -> " +
+      data.recipient
+    );
+
+    alert(
+      "Message sent successfully."
+    );
+
+  } catch (err) {
+
+    addLog(
+      "SEND ERROR: " +
+      err.message
+    );
+
+    alert(err.message);
+  }
 }
 
 
-/* =====================================================
-   LIVE EVENTS
-===================================================== */
+/* ==========================================
+   INITIAL STATUS
+========================================== */
 
-const events =
-    new EventSource("/events");
+fetch("/api/status")
+  .then(r => r.json())
+  .then(data => {
+    updateStatus(data);
 
-events.onmessage =
-    event => {
-
-        const data =
-            JSON.parse(event.data);
-
-        const dot =
-            document.getElementById("dot");
-
-        const status =
-            document.getElementById("status");
-
-        if (data.connected) {
-
-            dot.classList.add("online");
-
-            status.textContent =
-                "ONLINE";
-
-            status.style.color =
-                "#00ff73";
-
-            document.getElementById(
-                "connectionStat"
-            ).textContent = "ON";
-
-        } else {
-
-            dot.classList.remove("online");
-
-            status.textContent =
-                data.connecting
-                    ? "CONNECTING..."
-                    : "OFFLINE";
-
-            status.style.color =
-                data.connecting
-                    ? "#ffe66d"
-                    : "#ff5555";
-
-            document.getElementById(
-                "connectionStat"
-            ).textContent = "OFF";
-        }
-
-        if (data.pairingCode) {
-
-            document.getElementById("code")
-                .textContent =
-                data.pairingCode;
-        }
-
-        document.getElementById("sent")
-            .textContent =
-            data.sentCount || 0;
-
-        document.getElementById("failed")
-            .textContent =
-            data.failedCount || 0;
-
-        const jsonStatus =
-            document.getElementById(
-                "jsonStatus"
-            );
-
-        if (data.jsonLoaded) {
-
-            jsonStatus.textContent =
-                "● JSON: LOADED";
-
-            jsonStatus.classList.add(
-                "loaded"
-            );
-        }
-
-        const terminal =
-            document.getElementById(
-                "terminal"
-            );
-
-        terminal.innerHTML = "";
-
-        (data.logs || []).forEach(line => {
-
-            const div =
-                document.createElement("div");
-
-            div.className = "log";
-
-            div.textContent = line;
-
-            terminal.appendChild(div);
-
-        });
-
-        terminal.scrollTop =
-            terminal.scrollHeight;
-    };
+    if (data.pairingCode) {
+      pairCode.textContent =
+        data.pairingCode;
+    }
+  })
+  .catch(() => {});
 
 </script>
 
