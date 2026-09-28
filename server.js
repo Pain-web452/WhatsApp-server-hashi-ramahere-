@@ -1,6 +1,6 @@
 /**
- * RK RAJA XWD WhatsApp Dashboard - Server
- * Attempts to handle companion_reg_refresh for pairing code fix
+ * RK RAJA XWD WhatsApp Dashboard - Server v3.0.0
+ * FIXED: Pairing code issue with canonical browser, socket wait, and proxy support
  */
 
 const express = require('express');
@@ -22,6 +22,9 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const AUTH_DIR = path.join(__dirname, 'auth_info_baileys');
 
+// Optional: Residential proxy (set these in Railway env vars)
+const PROXY_URL = process.env.PROXY_URL || '';
+
 const upload = multer({ storage: multer.memoryStorage() });
 
 app.use(express.json({ limit: '10mb' }));
@@ -35,9 +38,7 @@ let sseClients = [];
 function broadcast(event, data) {
   const payload = `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
   sseClients.forEach((client) => {
-    try {
-      client.res.write(payload);
-    } catch (e) {}
+    try { client.res.write(payload); } catch (e) {}
   });
 }
 
@@ -83,7 +84,7 @@ async function resolveWaVersion() {
 }
 
 // ---------------------------------------------------------------
-// Wait for Socket Ready
+// Wait for Socket Ready (connecting/qr state)
 // ---------------------------------------------------------------
 function waitForSocketOpen(sockInstance) {
   return new Promise((resolve, reject) => {
@@ -121,14 +122,12 @@ async function createSocket() {
 
   log(`Creating WhatsApp socket (version: ${version ? version.join('.') : 'default'})`, 'info');
 
-  // Attach trace-level logger to see protocol exchanges
-  const logger = pino({ level: 'trace' });
-
-  sock = makeWASocket({
+  const socketOptions = {
     version,
     auth: state,
     printQRInTerminal: false,
-    browser: Browsers.ubuntu('Chrome'),
+    // CRITICAL FIX: Use canonical browser label to avoid silent rejection
+    browser: Browsers.macOS('Chrome'),
     generateHighQualityLinkPreview: false,
     syncFullHistory: false,
     markOnlineOnConnect: false,
@@ -136,15 +135,27 @@ async function createSocket() {
     keepAliveIntervalMs: 30000,
     retryDelayMs: 2000,
     maxRetries: 5,
-    logger: logger, // Enable trace logging
+    logger: pino({ level: 'warn' }),
     getMessage: async () => undefined
-  });
+  };
+
+  // Add proxy if configured (for Railway datacenter IP bypass)
+  if (PROXY_URL) {
+    try {
+      const { SocksProxyAgent } = require('socks-proxy-agent');
+      const agent = new SocksProxyAgent(PROXY_URL);
+      socketOptions.agent = agent;
+      socketOptions.fetchAgent = agent;
+      log('Using residential proxy for connection.', 'info');
+    } catch (e) {
+      log(`Proxy setup failed: ${e.message}`, 'warn');
+    }
+  }
+
+  sock = makeWASocket(socketOptions);
 
   sock.ev.on('creds.update', saveCreds);
 
-  // ---------------------------------------------------------------
-  // Handle raw notifications (for companion_reg_refresh)
-  // ---------------------------------------------------------------
   sock.ev.on('connection.update', async (update) => {
     const { connection, lastDisconnect, qr } = update;
 
@@ -250,7 +261,7 @@ app.get('/events', (req, res) => {
 });
 
 // ---------------------------------------------------------------
-// Pairing Endpoint
+// Pairing Endpoint - FIXED
 // ---------------------------------------------------------------
 app.post('/api/pair', async (req, res) => {
   try {
@@ -261,6 +272,7 @@ app.post('/api/pair', async (req, res) => {
       return res.status(400).json({ error: 'Invalid phone number. Include country code (digits only).' });
     }
 
+    // Clear old auth if fresh pairing requested
     if (fs.existsSync(AUTH_DIR)) {
       const { state } = await useMultiFileAuthState(AUTH_DIR);
       if (state.creds.registered && !isLoggedOut) {
@@ -274,6 +286,7 @@ app.post('/api/pair', async (req, res) => {
     await createSocket();
     if (!sock) throw new Error('Socket not created');
 
+    // CRITICAL: Wait for socket to be ready before requesting code
     await waitForSocketOpen(sock);
 
     log(`Requesting pairing code for ${number}…`, 'info');
@@ -285,16 +298,13 @@ app.post('/api/pair', async (req, res) => {
     broadcast('pairing', { code });
     log(`🔑 Pairing code generated: ${code}`, 'success');
 
-    // IMPORTANT: Wait for pair-success or timeout
     log('Waiting for phone to confirm pairing…', 'info');
 
-    // Set a timeout to detect if pairing never completes
     const pairingTimeout = setTimeout(() => {
-      log('❌ Pairing timeout. The code may have been rejected. Check terminal for details.', 'error');
+      log('❌ Pairing timeout. Code may have been rejected. Check terminal.', 'error');
       broadcast('pairing', { code: null, error: 'Pairing timeout' });
-    }, 120000); // 2 minutes
+    }, 120000);
 
-    // Check if connection opens within the timeout
     const checkInterval = setInterval(() => {
       if (connectionStatus === 'open') {
         clearTimeout(pairingTimeout);
@@ -341,7 +351,7 @@ app.post('/api/logout', async (req, res) => {
 });
 
 // ---------------------------------------------------------------
-// Send Message Endpoint (Same as before)
+// Send Message Endpoint
 // ---------------------------------------------------------------
 app.post('/api/send', upload.fields([
   { name: 'txtFile', maxCount: 1 },
