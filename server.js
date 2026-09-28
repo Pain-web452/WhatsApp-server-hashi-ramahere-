@@ -1,11 +1,14 @@
 const express = require("express");
+const fs = require("fs");
 const path = require("path");
 const multer = require("multer");
 
+const makeWASocket =
+  require("@whiskeysockets/baileys").default;
+
 const {
-    default: makeWASocket,
-    useMultiFileAuthState,
-    DisconnectReason
+  useMultiFileAuthState,
+  DisconnectReason
 } = require("@whiskeysockets/baileys");
 
 const { Boom } = require("@hapi/boom");
@@ -14,509 +17,662 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 const upload = multer({
-    storage: multer.memoryStorage(),
-    limits: {
-        fileSize: 2 * 1024 * 1024
-    }
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 10 * 1024 * 1024
+  }
 });
 
-app.use(express.json({ limit: "2mb" }));
+app.use(express.json({ limit: "5mb" }));
 app.use(express.urlencoded({ extended: true }));
-app.use(express.static(__dirname));
+
+const AUTH_DIR = path.join(
+  __dirname,
+  "auth_info_baileys"
+);
 
 let sock = null;
+let isConnected = false;
 let pairingCode = null;
-let connected = false;
-let connecting = false;
-let phoneNumber = "";
-let jsonLoaded = false;
+let currentPhone = null;
+let reconnecting = false;
 
 let sentCount = 0;
 let failedCount = 0;
 
-let logs = [];
+let jsonLoaded = false;
+let loadedJson = null;
+
+const clients = new Set();
 
 function log(message) {
-    const time = new Date().toLocaleTimeString("en-IN", {
-        hour12: false
-    });
+  const text =
+    `[${new Date().toLocaleTimeString()}] ${message}`;
 
-    const line = `[${time}] ${message}`;
+  console.log(text);
 
-    console.log(line);
+  broadcast({
+    type: "log",
+    message: text
+  });
+}
 
-    logs.push(line);
+function broadcast(data) {
+  const payload =
+    `data: ${JSON.stringify(data)}\n\n`;
 
-    if (logs.length > 100) {
-        logs.shift();
+  for (const client of clients) {
+    try {
+      client.write(payload);
+    } catch (e) {
+      clients.delete(client);
     }
-
-    broadcast();
+  }
 }
 
-const clients = [];
-
-function broadcast() {
-    const data = JSON.stringify({
-        connected,
-        connecting,
-        pairingCode,
-        jsonLoaded,
-        sentCount,
-        failedCount,
-        logs
-    });
-
-    clients.forEach(res => {
-        try {
-            res.write(`data: ${data}\n\n`);
-        } catch (_) {}
-    });
-}
+/* ==========================================
+   SSE
+========================================== */
 
 app.get("/events", (req, res) => {
-    res.setHeader("Content-Type", "text/event-stream");
-    res.setHeader("Cache-Control", "no-cache");
-    res.setHeader("Connection", "keep-alive");
+  res.setHeader("Content-Type", "text/event-stream");
+  res.setHeader("Cache-Control", "no-cache");
+  res.setHeader("Connection", "keep-alive");
 
-    res.flushHeaders();
+  res.write("\n");
 
-    clients.push(res);
+  clients.add(res);
 
-    res.write(
-        `data: ${JSON.stringify({
-            connected,
-            connecting,
-            pairingCode,
-            jsonLoaded,
-            sentCount,
-            failedCount,
-            logs
-        })}\n\n`
-    );
+  res.write(
+    `data: ${JSON.stringify({
+      type: "status",
+      connected: isConnected,
+      pairingCode,
+      sentCount,
+      failedCount,
+      jsonLoaded
+    })}\n\n`
+  );
 
-    req.on("close", () => {
-        const index = clients.indexOf(res);
-
-        if (index !== -1) {
-            clients.splice(index, 1);
-        }
-    });
+  req.on("close", () => {
+    clients.delete(res);
+  });
 });
+
+/* ==========================================
+   DASHBOARD
+========================================== */
 
 app.get("/", (req, res) => {
-    res.sendFile(path.join(__dirname, "dashboard.html"));
+  res.sendFile(
+    path.join(__dirname, "dashboard.html")
+  );
 });
 
-/* =====================================================
+/* ==========================================
+   WHATSAPP CONNECT
+========================================== */
+
+async function startWhatsApp() {
+  if (sock || reconnecting) {
+    return;
+  }
+
+  reconnecting = true;
+
+  try {
+    fs.mkdirSync(AUTH_DIR, {
+      recursive: true
+    });
+
+    const {
+      state,
+      saveCreds
+    } = await useMultiFileAuthState(AUTH_DIR);
+
+    sock = makeWASocket({
+      auth: state,
+
+      printQRInTerminal: false,
+
+      browser: [
+        "RK RAJA XWD",
+        "Chrome",
+        "1.0.0"
+      ],
+
+      generateHighQualityLinkPreview: false
+    });
+
+    sock.ev.on(
+      "creds.update",
+      saveCreds
+    );
+
+    sock.ev.on(
+      "connection.update",
+      async (update) => {
+        const {
+          connection,
+          lastDisconnect,
+          qr
+        } = update;
+
+        if (qr) {
+          log("WhatsApp pairing screen ready.");
+        }
+
+        if (connection === "open") {
+          isConnected = true;
+          pairingCode = null;
+
+          log("WhatsApp connected successfully.");
+
+          broadcast({
+            type: "status",
+            connected: true,
+            pairingCode: null,
+            sentCount,
+            failedCount,
+            jsonLoaded
+          });
+        }
+
+        if (connection === "close") {
+          isConnected = false;
+
+          const statusCode =
+            new Boom(
+              lastDisconnect?.error
+            )?.output?.statusCode;
+
+          const loggedOut =
+            statusCode ===
+            DisconnectReason.loggedOut;
+
+          sock = null;
+
+          broadcast({
+            type: "status",
+            connected: false,
+            pairingCode,
+            sentCount,
+            failedCount,
+            jsonLoaded
+          });
+
+          if (loggedOut) {
+            log(
+              "WhatsApp logged out. Pair again."
+            );
+          } else {
+            log(
+              "Connection closed. Reconnecting..."
+            );
+
+            setTimeout(() => {
+              startWhatsApp();
+            }, 3000);
+          }
+        }
+      }
+    );
+
+  } catch (err) {
+    console.error(err);
+
+    sock = null;
+
+    log(
+      "WhatsApp start error: " +
+      err.message
+    );
+  } finally {
+    reconnecting = false;
+  }
+}
+
+/* ==========================================
    PAIRING CODE
-===================================================== */
+========================================== */
 
 app.post("/api/pair", async (req, res) => {
-    try {
-        let number = String(req.body.phone || "");
+  try {
+    let phone = String(
+      req.body.phone || ""
+    ).replace(/\D/g, "");
 
-        number = number.replace(/[^\d]/g, "");
+    if (!phone) {
+      return res.status(400).json({
+        error:
+          "WhatsApp phone number required."
+      });
+    }
 
-        if (number.length < 8) {
-            return res.status(400).json({
-                ok: false,
-                error: "Invalid phone number"
-            });
-        }
+    if (phone.length < 8) {
+      return res.status(400).json({
+        error:
+          "Valid international number enter karo."
+      });
+    }
 
-        phoneNumber = number;
+    currentPhone = phone;
 
-        log("[AUTH] Pairing request received.");
+    if (!sock) {
+      await startWhatsApp();
+    }
 
-        if (!sock) {
-            await startWhatsApp();
-        }
+    /*
+      Baileys pairing code requires
+      an active socket and an unregistered
+      WhatsApp account.
+    */
 
-        if (!sock) {
-            return res.status(500).json({
-                ok: false,
-                error: "WhatsApp socket unavailable"
-            });
-        }
-
-        if (sock.authState?.creds?.registered) {
-            return res.json({
-                ok: true,
-                connected: connected,
-                message: "Existing WhatsApp session found."
-            });
-        }
-
-        log("[AUTH] Requesting pairing code...");
-
-        const code = await sock.requestPairingCode(number);
+    if (
+      sock &&
+      !sock.authState?.creds?.registered
+    ) {
+      try {
+        const code =
+          await sock.requestPairingCode(
+            phone
+          );
 
         pairingCode = code;
 
-        log("[AUTH] Pairing code generated.");
+        log(
+          `Pairing code generated for ${phone}`
+        );
 
-        broadcast();
-
-        res.json({
-            ok: true,
-            code
+        broadcast({
+          type: "pairing",
+          code,
+          phone
         });
 
-    } catch (error) {
-        log("[ERROR] Pairing failed.");
-
-        res.status(500).json({
-            ok: false,
-            error: error.message
+        return res.json({
+          success: true,
+          code,
+          phone
         });
+      } catch (err) {
+        console.error(err);
+
+        return res.status(500).json({
+          error:
+            "Pairing code generate nahi hua: " +
+            err.message
+        });
+      }
     }
+
+    if (
+      sock &&
+      sock.authState?.creds?.registered
+    ) {
+      return res.json({
+        success: true,
+        connected: isConnected,
+        message:
+          "WhatsApp session already registered."
+      });
+    }
+
+    return res.status(500).json({
+      error:
+        "WhatsApp socket ready nahi hai."
+    });
+
+  } catch (err) {
+    console.error(err);
+
+    res.status(500).json({
+      error:
+        err.message ||
+        "Pairing failed."
+    });
+  }
 });
 
-/* =====================================================
+/* ==========================================
+   STATUS
+========================================== */
+
+app.get("/api/status", (req, res) => {
+  res.json({
+    connected: isConnected,
+    pairingCode,
+    phone: currentPhone,
+    sentCount,
+    failedCount,
+    jsonLoaded
+  });
+});
+
+/* ==========================================
    JSON PASTE
-===================================================== */
-
-app.post("/api/json/paste", (req, res) => {
-    try {
-        const raw = String(req.body.json || "").trim();
-
-        if (!raw) {
-            return res.status(400).json({
-                ok: false,
-                error: "JSON empty hai."
-            });
-        }
-
-        const parsed = JSON.parse(raw);
-
-        if (
-            parsed === null ||
-            typeof parsed !== "object"
-        ) {
-            return res.status(400).json({
-                ok: false,
-                error: "Valid JSON object/array required."
-            });
-        }
-
-        jsonLoaded = true;
-
-        log("[JSON] JSON validated successfully.");
-
-        broadcast();
-
-        res.json({
-            ok: true,
-            message: "JSON loaded successfully."
-        });
-
-    } catch (error) {
-        res.status(400).json({
-            ok: false,
-            error: "Invalid JSON."
-        });
-    }
-});
-
-/* =====================================================
-   JSON FILE UPLOAD
-===================================================== */
+========================================== */
 
 app.post(
-    "/api/json/upload",
-    upload.single("jsonFile"),
-    (req, res) => {
+  "/api/json/paste",
+  (req, res) => {
+    try {
+      const raw =
+        typeof req.body.json === "string"
+          ? req.body.json.trim()
+          : "";
 
-        try {
-            if (!req.file) {
-                return res.status(400).json({
-                    ok: false,
-                    error: "JSON file select karo."
-                });
-            }
+      if (!raw) {
+        return res.status(400).json({
+          error: "JSON paste karo."
+        });
+      }
 
-            const text =
-                req.file.buffer.toString("utf8");
+      let parsed;
 
-            const parsed = JSON.parse(text);
+      try {
+        parsed = JSON.parse(raw);
+      } catch (err) {
+        return res.status(400).json({
+          error:
+            "Invalid JSON format."
+        });
+      }
 
-            if (
-                parsed === null ||
-                typeof parsed !== "object"
-            ) {
-                return res.status(400).json({
-                    ok: false,
-                    error: "Invalid JSON structure."
-                });
-            }
+      loadedJson = parsed;
+      jsonLoaded = true;
 
-            jsonLoaded = true;
+      log("JSON pasted successfully.");
 
-            log(
-                `[JSON] File loaded: ${req.file.originalname}`
-            );
+      broadcast({
+        type: "json",
+        loaded: true
+      });
 
-            broadcast();
+      res.json({
+        success: true
+      });
 
-            res.json({
-                ok: true,
-                message: "JSON file validated successfully."
-            });
-
-        } catch (error) {
-
-            res.status(400).json({
-                ok: false,
-                error: "File me valid JSON nahi hai."
-            });
-        }
+    } catch (err) {
+      res.status(500).json({
+        error: err.message
+      });
     }
+  }
 );
 
-/* =====================================================
-   CLEAR JSON STATUS
-===================================================== */
+/* ==========================================
+   JSON UPLOAD
+========================================== */
 
-app.post("/api/json/clear", (req, res) => {
+app.post(
+  "/api/json/upload",
+  upload.single("jsonFile"),
+  (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({
+          error:
+            "JSON file select karo."
+        });
+      }
 
+      const raw =
+        req.file.buffer.toString("utf8");
+
+      let parsed;
+
+      try {
+        parsed = JSON.parse(raw);
+      } catch (err) {
+        return res.status(400).json({
+          error:
+            "Uploaded file valid JSON nahi hai."
+        });
+      }
+
+      loadedJson = parsed;
+      jsonLoaded = true;
+
+      log(
+        `JSON uploaded: ${req.file.originalname}`
+      );
+
+      broadcast({
+        type: "json",
+        loaded: true
+      });
+
+      res.json({
+        success: true,
+        filename:
+          req.file.originalname
+      });
+
+    } catch (err) {
+      res.status(500).json({
+        error: err.message
+      });
+    }
+  }
+);
+
+/* ==========================================
+   CLEAR JSON
+========================================== */
+
+app.post(
+  "/api/json/clear",
+  (req, res) => {
+    loadedJson = null;
     jsonLoaded = false;
 
-    log("[JSON] JSON status cleared.");
+    log("Loaded JSON cleared.");
 
-    broadcast();
+    broadcast({
+      type: "json",
+      loaded: false
+    });
 
     res.json({
-        ok: true
+      success: true
     });
+  }
+);
+
+/* ==========================================
+   TXT FILE
+========================================== */
+
+app.post(
+  "/api/txt/upload",
+  upload.single("txtFile"),
+  (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({
+          error:
+            "TXT file select karo."
+        });
+      }
+
+      const text =
+        req.file.buffer.toString("utf8");
+
+      const lines =
+        text
+          .split(/\r?\n/)
+          .map(x => x.trim())
+          .filter(Boolean);
+
+      log(
+        `TXT loaded: ${req.file.originalname} (${lines.length} lines)`
+      );
+
+      res.json({
+        success: true,
+        filename:
+          req.file.originalname,
+        lines: lines.length
+      });
+
+    } catch (err) {
+      res.status(500).json({
+        error: err.message
+      });
+    }
+  }
+);
+
+/* ==========================================
+   SEND MESSAGE
+========================================== */
+
+app.post(
+  "/api/message",
+  async (req, res) => {
+    try {
+      if (!sock || !isConnected) {
+        return res.status(400).json({
+          error:
+            "WhatsApp connected nahi hai."
+        });
+      }
+
+      const recipient =
+        String(
+          req.body.recipient || ""
+        ).trim();
+
+      const hereName =
+        String(
+          req.body.hereName || ""
+        ).trim();
+
+      const message =
+        String(
+          req.body.message || ""
+        ).trim();
+
+      if (!recipient) {
+        return res.status(400).json({
+          error:
+            "Group UID ya WhatsApp number required hai."
+        });
+      }
+
+      if (!message) {
+        return res.status(400).json({
+          error:
+            "Message required hai."
+        });
+      }
+
+      let jid = recipient;
+
+      /*
+        Group:
+        120363xxxx@g.us
+
+        Personal number:
+        919876543210
+      */
+
+      if (!jid.includes("@")) {
+        const digits =
+          jid.replace(/\D/g, "");
+
+        if (!digits) {
+          return res.status(400).json({
+            error:
+              "Valid number/Group UID enter karo."
+          });
+        }
+
+        jid =
+          `${digits}@s.whatsapp.net`;
+      }
+
+      let finalMessage =
+        message;
+
+      if (hereName) {
+        finalMessage =
+          `${hereName}\n\n${message}`;
+      }
+
+      await sock.sendMessage(
+        jid,
+        {
+          text: finalMessage
+        }
+      );
+
+      sentCount++;
+
+      log(
+        `Message sent -> ${jid}`
+      );
+
+      broadcast({
+        type: "message_sent",
+        recipient: jid,
+        hereName,
+        sentCount
+      });
+
+      res.json({
+        success: true,
+        recipient: jid,
+        message:
+          "Message sent successfully."
+      });
+
+    } catch (err) {
+      failedCount++;
+
+      log(
+        "Message failed: " +
+        err.message
+      );
+
+      broadcast({
+        type: "message_failed",
+        failedCount
+      });
+
+      res.status(500).json({
+        error:
+          err.message ||
+          "Message send failed."
+      });
+    }
+  }
+);
+
+/* ==========================================
+   HEALTH
+========================================== */
+
+app.get("/health", (req, res) => {
+  res.json({
+    status: "ok",
+    connected: isConnected
+  });
 });
 
-/* =====================================================
-   SEND SINGLE MESSAGE
-===================================================== */
-
-app.post("/api/message", async (req, res) => {
-
-    try {
-
-        if (!connected || !sock) {
-            return res.status(400).json({
-                ok: false,
-                error: "WhatsApp connected nahi hai."
-            });
-        }
-
-        let recipient =
-            String(req.body.recipient || "")
-                .replace(/[^\d@g.-]/g, "");
-
-        const message =
-            String(req.body.message || "").trim();
-
-        const header =
-            String(req.body.header || "").trim();
-
-        if (!recipient) {
-            return res.status(400).json({
-                ok: false,
-                error: "Recipient / Group UID required."
-            });
-        }
-
-        if (!message) {
-            return res.status(400).json({
-                ok: false,
-                error: "Message required."
-            });
-        }
-
-        let jid = recipient;
-
-        /*
-         * Normal phone number:
-         * 919876543210
-         *
-         * Group JID:
-         * 1234567890-123456789@g.us
-         */
-
-        if (!jid.includes("@")) {
-            jid = `${jid}@s.whatsapp.net`;
-        }
-
-        const finalMessage =
-            header
-                ? `${header}\n\n${message}`
-                : message;
-
-        await sock.sendMessage(jid, {
-            text: finalMessage
-        });
-
-        sentCount++;
-
-        log("[MESSAGE] Message sent.");
-
-        broadcast();
-
-        res.json({
-            ok: true,
-            message: "Message sent."
-        });
-
-    } catch (error) {
-
-        failedCount++;
-
-        log("[MESSAGE] Sending failed.");
-
-        broadcast();
-
-        res.status(500).json({
-            ok: false,
-            error: error.message
-        });
-    }
-});
-
-/* =====================================================
-   WHATSAPP
-===================================================== */
-
-async function startWhatsApp() {
-
-    if (connecting) return;
-
-    connecting = true;
-
-    broadcast();
-
-    try {
-
-        const {
-            state,
-            saveCreds
-        } = await useMultiFileAuthState(
-            path.join(__dirname, "auth_info_baileys")
-        );
-
-        sock = makeWASocket({
-            auth: state,
-            printQRInTerminal: false,
-            browser: [
-                "RK RAJA XWD",
-                "Chrome",
-                "1.0.0"
-            ]
-        });
-
-        sock.ev.on(
-            "creds.update",
-            saveCreds
-        );
-
-        sock.ev.on(
-            "connection.update",
-            async update => {
-
-                const {
-                    connection,
-                    lastDisconnect
-                } = update;
-
-                if (connection === "open") {
-
-                    connected = true;
-                    connecting = false;
-                    pairingCode = null;
-
-                    log(
-                        "[WHATSAPP] Connection ONLINE."
-                    );
-
-                    broadcast();
-                }
-
-                if (connection === "close") {
-
-                    connected = false;
-                    connecting = false;
-                    pairingCode = null;
-
-                    const code =
-                        lastDisconnect?.error instanceof Boom
-                            ? lastDisconnect.error.output.statusCode
-                            : null;
-
-                    if (
-                        code ===
-                        DisconnectReason.loggedOut
-                    ) {
-
-                        log(
-                            "[WHATSAPP] Session logged out."
-                        );
-
-                        sock = null;
-
-                    } else {
-
-                        log(
-                            "[WHATSAPP] Connection closed. Reconnecting..."
-                        );
-
-                        sock = null;
-
-                        setTimeout(() => {
-                            startWhatsApp();
-                        }, 5000);
-                    }
-
-                    broadcast();
-                }
-            }
-        );
-
-        log(
-            "[BAILEYS] Authentication state loaded."
-        );
-
-        connecting = false;
-
-        broadcast();
-
-    } catch (error) {
-
-        connecting = false;
-        sock = null;
-
-        log(
-            "[ERROR] WhatsApp startup failed."
-        );
-
-        broadcast();
-
-        setTimeout(() => {
-            startWhatsApp();
-        }, 10000);
-    }
-}
-
-/* =====================================================
-   START
-===================================================== */
+/* ==========================================
+   START SERVER
+========================================== */
 
 app.listen(
-    PORT,
-    "0.0.0.0",
-    () => {
+  PORT,
+  "0.0.0.0",
+  async () => {
+    console.log(
+      `RK RAJA XWD running on port ${PORT}`
+    );
 
-        console.log(
-            `RK RAJA XWD running on port ${PORT}`
-        );
-
-        log("[SERVER] Dashboard ready.");
-
-        startWhatsApp();
-    }
+    await startWhatsApp();
+  }
 );
