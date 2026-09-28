@@ -1,14 +1,12 @@
 /**
  * RK RAJA XWD WhatsApp Dashboard - Server
- * Fixes pairing code flow using fetchLatestWaWebVersion
- * Keeps all existing dashboard features intact.
+ * Fixes pairing code flow using fetchLatestWaWebVersion and canonical browser label
  */
 
 const express = require('express');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
-const Boom = require('@hapi/boom');
 
 const {
   default: makeWASocket,
@@ -23,16 +21,13 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const AUTH_DIR = path.join(__dirname, 'auth_info_baileys');
 
-// ---------------------------------------------------------------
-// Multer setup (memory storage – files are read directly)
-// ---------------------------------------------------------------
 const upload = multer({ storage: multer.memoryStorage() });
 
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
 // ---------------------------------------------------------------
-// SSE (Server-Sent Events) – live terminal & status
+// SSE (Server-Sent Events) Setup
 // ---------------------------------------------------------------
 let sseClients = [];
 
@@ -41,44 +36,36 @@ function broadcast(event, data) {
   sseClients.forEach((client) => {
     try {
       client.res.write(payload);
-    } catch (e) {
-      // client disconnected – ignore
-    }
+    } catch (e) {}
   });
 }
 
 function log(message, type = 'info') {
-  const entry = {
-    time: new Date().toISOString(),
-    type,
-    message
-  };
+  const entry = { time: new Date().toISOString(), type, message };
   broadcast('terminal', entry);
   console.log(`[${type}] ${message}`);
 }
 
 // ---------------------------------------------------------------
-// Global WhatsApp socket state
+// Global State
 // ---------------------------------------------------------------
 let sock = null;
 let connectionStatus = 'disconnected';
 let pairingCode = null;
 let isLoggedOut = false;
 let reconnectTimer = null;
-let currentPhoneNumber = null;
 let currentVersion = null;
 
 // ---------------------------------------------------------------
-// Phone number normalisation
+// Normalize Phone Number
 // ---------------------------------------------------------------
 function normalisePhoneNumber(raw) {
   if (!raw) return '';
-  // Remove everything that is not a digit
   return String(raw).replace(/\D/g, '');
 }
 
 // ---------------------------------------------------------------
-// Resolve latest WhatsApp Web version safely
+// Fetch Latest WhatsApp Web Version
 // ---------------------------------------------------------------
 async function resolveWaVersion() {
   try {
@@ -87,27 +74,44 @@ async function resolveWaVersion() {
       log(`WhatsApp Web version resolved: ${version.join('.')}`, 'success');
       return version;
     }
-    throw new Error('Invalid version format returned');
+    throw new Error('Invalid version format');
   } catch (err) {
     log(`Could not fetch latest WA Web version: ${err.message}. Using Baileys default.`, 'warn');
-    return undefined; // let Baileys use its own default
+    return undefined;
   }
 }
 
 // ---------------------------------------------------------------
-// Create / recreate the WhatsApp socket
+// Wait for Socket to be Ready (Connecting/QR state)
+// ---------------------------------------------------------------
+function waitForSocketOpen(sockInstance) {
+  return new Promise((resolve, reject) => {
+    const timeout = setTimeout(() => {
+      reject(new Error('Socket connection timed out. Please try again.'));
+    }, 30000);
+
+    const onUpdate = (update) => {
+      if (update.connection === 'connecting' || update.qr) {
+        clearTimeout(timeout);
+        sockInstance.ev.off('connection.update', onUpdate);
+        resolve();
+      }
+    };
+    sockInstance.ev.on('connection.update', onUpdate);
+  });
+}
+
+// ---------------------------------------------------------------
+// Create / Recreate WhatsApp Socket
 // ---------------------------------------------------------------
 async function createSocket() {
-  // Clean up old socket listeners if any
   if (sock) {
     try {
       sock.ev.removeAllListeners('connection.update');
       sock.ev.removeAllListeners('creds.update');
       sock.ev.removeAllListeners('messages.upsert');
       sock.end(undefined);
-    } catch (e) {
-      // ignore
-    }
+    } catch (e) {}
   }
 
   const { state, saveCreds } = await useMultiFileAuthState(AUTH_DIR);
@@ -116,11 +120,12 @@ async function createSocket() {
 
   log(`Creating WhatsApp socket (version: ${version ? version.join('.') : 'default'})`, 'info');
 
+  // IMPORTANT: Using Browsers.ubuntu('Chrome') fixes the "Couldn't link device" error
   sock = makeWASocket({
     version,
     auth: state,
     printQRInTerminal: false,
-    browser: Browsers.ubuntu('Chrome'), // canonical label for pairing
+    browser: Browsers.ubuntu('Chrome'), 
     generateHighQualityLinkPreview: false,
     syncFullHistory: false,
     markOnlineOnConnect: false,
@@ -137,7 +142,7 @@ async function createSocket() {
     const { connection, lastDisconnect, qr } = update;
 
     if (qr) {
-      log('QR received (pairing code mode – ignoring QR).', 'info');
+      log('QR received (ignoring, using pairing code).', 'info');
     }
 
     if (connection === 'connecting') {
@@ -154,7 +159,6 @@ async function createSocket() {
       broadcast('pairing', { code: null });
       log('✅ WhatsApp connected successfully!', 'success');
 
-      // Send list of groups / contacts after connection
       try {
         const groups = await sock.groupFetchAllParticipating();
         const groupList = Object.values(groups).map((g) => ({
@@ -179,7 +183,6 @@ async function createSocket() {
         isLoggedOut = true;
         log('❌ Logged out. Fresh pairing required.', 'error');
         broadcast('status', { status: 'loggedOut' });
-        // Do NOT auto-reconnect
         return;
       }
 
@@ -190,7 +193,6 @@ async function createSocket() {
         return;
       }
 
-      // Any other unexpected close → reconnect
       log(`Connection closed (${reason}). Reconnecting in 5s…`, 'warn');
       broadcast('status', { status: 'reconnecting' });
       scheduleReconnect();
@@ -201,7 +203,7 @@ async function createSocket() {
 }
 
 // ---------------------------------------------------------------
-// Schedule automatic reconnect
+// Auto Reconnect
 // ---------------------------------------------------------------
 function scheduleReconnect() {
   if (reconnectTimer) clearTimeout(reconnectTimer);
@@ -218,7 +220,7 @@ function scheduleReconnect() {
 }
 
 // ---------------------------------------------------------------
-// SSE endpoint – live terminal & events
+// SSE Endpoint
 // ---------------------------------------------------------------
 app.get('/events', (req, res) => {
   res.setHeader('Content-Type', 'text/event-stream');
@@ -230,7 +232,6 @@ app.get('/events', (req, res) => {
   const client = { res };
   sseClients.push(client);
 
-  // Send current status immediately
   res.write(`event: status\ndata: ${JSON.stringify({ status: connectionStatus })}\n\n`);
   if (pairingCode) {
     res.write(`event: pairing\ndata: ${JSON.stringify({ code: pairingCode })}\n\n`);
@@ -242,7 +243,7 @@ app.get('/events', (req, res) => {
 });
 
 // ---------------------------------------------------------------
-// Pairing code endpoint
+// Pairing Endpoint
 // ---------------------------------------------------------------
 app.post('/api/pair', async (req, res) => {
   try {
@@ -253,43 +254,28 @@ app.post('/api/pair', async (req, res) => {
       return res.status(400).json({ error: 'Invalid phone number. Include country code (digits only).' });
     }
 
-    if (isLoggedOut) {
-      // Clear old auth on fresh pairing request
-      isLoggedOut = false;
+    // Clear old auth if fresh pairing is requested
+    if (fs.existsSync(AUTH_DIR)) {
+      const { state } = await useMultiFileAuthState(AUTH_DIR);
+      if (state.creds.registered && !isLoggedOut) {
+         return res.status(400).json({ error: 'Already paired. Logout first or delete auth_info_baileys.' });
+      }
     }
 
-    // Always create a fresh socket for pairing to avoid stale state
-    // (Do not delete existing auth if already registered)
-    const { state } = await useMultiFileAuthState(AUTH_DIR);
-    if (state.creds.registered) {
-      return res.status(400).json({
-        error: 'Already paired. Use the connected session or delete auth_info_baileys to re-pair.'
-      });
-    }
-
-    currentPhoneNumber = number;
+    isLoggedOut = false;
     currentVersion = await resolveWaVersion();
 
-    // Build the socket (will be used for pairing)
+    // Create socket and wait for it to be ready
     await createSocket();
+    if (!sock) throw new Error('Socket not created');
 
-    if (!sock) {
-      throw new Error('Socket not created');
-    }
-
-    // Wait until the socket is in "connecting" or "qr" state before requesting pairing code
-    let waited = 0;
-    while (waited < 15000 && connectionStatus === 'disconnected') {
-      await delay(300);
-      waited += 300;
-    }
+    // Wait for the socket to be in 'connecting' or 'qr' state
+    await waitForSocketOpen(sock);
 
     log(`Requesting pairing code for ${number}…`, 'info');
     const code = await sock.requestPairingCode(number);
 
-    if (!code) {
-      throw new Error('No pairing code returned');
-    }
+    if (!code) throw new Error('No pairing code returned');
 
     pairingCode = code;
     broadcast('pairing', { code });
@@ -303,7 +289,7 @@ app.post('/api/pair', async (req, res) => {
 });
 
 // ---------------------------------------------------------------
-// Reconnect endpoint (manual)
+// Manual Reconnect Endpoint
 // ---------------------------------------------------------------
 app.post('/api/reconnect', async (req, res) => {
   try {
@@ -316,15 +302,12 @@ app.post('/api/reconnect', async (req, res) => {
 });
 
 // ---------------------------------------------------------------
-// Logout endpoint
+// Logout Endpoint
 // ---------------------------------------------------------------
 app.post('/api/logout', async (req, res) => {
   try {
     isLoggedOut = true;
-    if (sock) {
-      await sock.logout();
-    }
-    // Clear auth folder
+    if (sock) await sock.logout();
     fs.rmSync(AUTH_DIR, { recursive: true, force: true });
     connectionStatus = 'loggedOut';
     broadcast('status', { status: 'loggedOut' });
@@ -336,7 +319,7 @@ app.post('/api/logout', async (req, res) => {
 });
 
 // ---------------------------------------------------------------
-// Send message endpoint (TXT / JSON)
+// Send Message Endpoint
 // ---------------------------------------------------------------
 app.post('/api/send', upload.fields([
   { name: 'txtFile', maxCount: 1 },
@@ -353,7 +336,6 @@ app.post('/api/send', upload.fields([
     const sendTime = req.body.sendTime || '0';
     const messages = [];
 
-    // --- TXT file (line-by-line) ---
     if (req.files?.txtFile?.[0]) {
       const text = req.files.txtFile[0].buffer.toString('utf-8');
       text.split(/\r?\n/).forEach((line) => {
@@ -362,7 +344,6 @@ app.post('/api/send', upload.fields([
       });
     }
 
-    // --- JSON paste / file ---
     if (req.files?.jsonFile?.[0]) {
       try {
         const jsonText = req.files.jsonFile[0].buffer.toString('utf-8');
@@ -379,7 +360,6 @@ app.post('/api/send', upload.fields([
       }
     }
 
-    // --- JSON pasted in body ---
     if (req.body.jsonPaste) {
       try {
         const parsed = JSON.parse(req.body.jsonPaste);
@@ -399,9 +379,8 @@ app.post('/api/send', upload.fields([
       return res.status(400).json({ error: 'No messages found in TXT or JSON.' });
     }
 
-    // Build recipient JID
     let jid = recipient.trim();
-    if (!jid) return res.status(400).json({ error: 'Recipient (group UID or number) is required.' });
+    if (!jid) return res.status(400).json({ error: 'Recipient required.' });
 
     if (!jid.includes('@')) {
       const digits = normalisePhoneNumber(jid);
@@ -419,7 +398,6 @@ app.post('/api/send', upload.fields([
     for (let i = 0; i < messages.length; i++) {
       let finalMessage = messages[i];
 
-      // Apply hereName and lastName: "hereName + message + lastName"
       if (hereName || lastName) {
         finalMessage = `${hereName} ${finalMessage} ${lastName}`.trim();
       }
@@ -449,14 +427,14 @@ app.post('/api/send', upload.fields([
 });
 
 // ---------------------------------------------------------------
-// Serve dashboard
+// Serve Dashboard
 // ---------------------------------------------------------------
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'dashboard.html'));
 });
 
 // ---------------------------------------------------------------
-// Start server
+// Start Server
 // ---------------------------------------------------------------
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 RK RAJA XWD dashboard running on http://0.0.0.0:${PORT}`);
