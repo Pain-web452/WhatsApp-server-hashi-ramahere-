@@ -1,6 +1,6 @@
 {
   "name": "rk-raja-xwd-whatsapp-dashboard",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "RK RAJA XWD WhatsApp Dashboard with pairing code support",
   "main": "server.js",
   "scripts": {
