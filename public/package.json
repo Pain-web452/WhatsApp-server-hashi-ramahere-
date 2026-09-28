@@ -1,0 +1,17 @@
+{
+  "name": "rk-raja-xwd",
+  "version": "1.0.0",
+  "description": "RK RAJA XWD WhatsApp Dashboard",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "@hapi/boom": "^10.0.1",
+    "@whiskeysockets/baileys": "^6.7.18",
+    "express": "^4.21.2"
+  }
+}
