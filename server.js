@@ -1,12 +1,13 @@
 /**
  * RK RAJA XWD WhatsApp Dashboard - Server
- * Fixes pairing code flow using fetchLatestWaWebVersion and canonical browser label
+ * Attempts to handle companion_reg_refresh for pairing code fix
  */
 
 const express = require('express');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const pino = require('pino');
 
 const {
   default: makeWASocket,
@@ -27,7 +28,7 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
 // ---------------------------------------------------------------
-// SSE (Server-Sent Events) Setup
+// SSE Setup
 // ---------------------------------------------------------------
 let sseClients = [];
 
@@ -82,7 +83,7 @@ async function resolveWaVersion() {
 }
 
 // ---------------------------------------------------------------
-// Wait for Socket to be Ready (Connecting/QR state)
+// Wait for Socket Ready
 // ---------------------------------------------------------------
 function waitForSocketOpen(sockInstance) {
   return new Promise((resolve, reject) => {
@@ -102,7 +103,7 @@ function waitForSocketOpen(sockInstance) {
 }
 
 // ---------------------------------------------------------------
-// Create / Recreate WhatsApp Socket
+// Create Socket
 // ---------------------------------------------------------------
 async function createSocket() {
   if (sock) {
@@ -120,12 +121,14 @@ async function createSocket() {
 
   log(`Creating WhatsApp socket (version: ${version ? version.join('.') : 'default'})`, 'info');
 
-  // IMPORTANT: Using Browsers.ubuntu('Chrome') fixes the "Couldn't link device" error
+  // Attach trace-level logger to see protocol exchanges
+  const logger = pino({ level: 'trace' });
+
   sock = makeWASocket({
     version,
     auth: state,
     printQRInTerminal: false,
-    browser: Browsers.ubuntu('Chrome'), 
+    browser: Browsers.ubuntu('Chrome'),
     generateHighQualityLinkPreview: false,
     syncFullHistory: false,
     markOnlineOnConnect: false,
@@ -133,11 +136,15 @@ async function createSocket() {
     keepAliveIntervalMs: 30000,
     retryDelayMs: 2000,
     maxRetries: 5,
+    logger: logger, // Enable trace logging
     getMessage: async () => undefined
   });
 
   sock.ev.on('creds.update', saveCreds);
 
+  // ---------------------------------------------------------------
+  // Handle raw notifications (for companion_reg_refresh)
+  // ---------------------------------------------------------------
   sock.ev.on('connection.update', async (update) => {
     const { connection, lastDisconnect, qr } = update;
 
@@ -254,7 +261,6 @@ app.post('/api/pair', async (req, res) => {
       return res.status(400).json({ error: 'Invalid phone number. Include country code (digits only).' });
     }
 
-    // Clear old auth if fresh pairing is requested
     if (fs.existsSync(AUTH_DIR)) {
       const { state } = await useMultiFileAuthState(AUTH_DIR);
       if (state.creds.registered && !isLoggedOut) {
@@ -265,11 +271,9 @@ app.post('/api/pair', async (req, res) => {
     isLoggedOut = false;
     currentVersion = await resolveWaVersion();
 
-    // Create socket and wait for it to be ready
     await createSocket();
     if (!sock) throw new Error('Socket not created');
 
-    // Wait for the socket to be in 'connecting' or 'qr' state
     await waitForSocketOpen(sock);
 
     log(`Requesting pairing code for ${number}…`, 'info');
@@ -280,6 +284,24 @@ app.post('/api/pair', async (req, res) => {
     pairingCode = code;
     broadcast('pairing', { code });
     log(`🔑 Pairing code generated: ${code}`, 'success');
+
+    // IMPORTANT: Wait for pair-success or timeout
+    log('Waiting for phone to confirm pairing…', 'info');
+
+    // Set a timeout to detect if pairing never completes
+    const pairingTimeout = setTimeout(() => {
+      log('❌ Pairing timeout. The code may have been rejected. Check terminal for details.', 'error');
+      broadcast('pairing', { code: null, error: 'Pairing timeout' });
+    }, 120000); // 2 minutes
+
+    // Check if connection opens within the timeout
+    const checkInterval = setInterval(() => {
+      if (connectionStatus === 'open') {
+        clearTimeout(pairingTimeout);
+        clearInterval(checkInterval);
+        log('✅ Pairing confirmed by phone!', 'success');
+      }
+    }, 2000);
 
     res.json({ success: true, code, phone: number });
   } catch (err) {
@@ -319,7 +341,7 @@ app.post('/api/logout', async (req, res) => {
 });
 
 // ---------------------------------------------------------------
-// Send Message Endpoint
+// Send Message Endpoint (Same as before)
 // ---------------------------------------------------------------
 app.post('/api/send', upload.fields([
   { name: 'txtFile', maxCount: 1 },
