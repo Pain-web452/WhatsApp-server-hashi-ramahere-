@@ -1,8 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
+
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+>
 
 <title>RK RAJA XWD</title>
 
@@ -10,180 +16,99 @@
 
 * {
     box-sizing: border-box;
+}
+
+body {
     margin: 0;
-    padding: 0;
+    background: #020504;
+    color: #00ff73;
+    font-family: monospace;
 }
 
-html,
-body {
-    width: 100%;
-    min-height: 100%;
-}
-
-body {
-    background:
-        radial-gradient(circle at 50% 0%, rgba(0,255,100,.08), transparent 35%),
-        radial-gradient(circle at 10% 90%, rgba(0,255,180,.05), transparent 30%),
-        #020403;
-
-    color: #00ff88;
-    font-family: "Courier New", monospace;
-    overflow-x: hidden;
-}
-
-/* MATRIX BACKGROUND */
-
-.matrix {
-    position: fixed;
-    inset: 0;
-    z-index: -2;
-    opacity: .13;
-    overflow: hidden;
-}
-
-.matrix span {
-    position: absolute;
-    top: -100px;
-    color: #00ff66;
-    font-size: 14px;
-    animation: rain linear infinite;
-}
-
-@keyframes rain {
-    from {
-        transform: translateY(-120px);
-    }
-
-    to {
-        transform: translateY(110vh);
-    }
-}
-
-/* SCANLINES */
-
-body::after {
+body:before {
     content: "";
     position: fixed;
     inset: 0;
     pointer-events: none;
-    z-index: 20;
 
-    background: repeating-linear-gradient(
-        to bottom,
-        rgba(255,255,255,0.015) 0px,
-        rgba(255,255,255,0.015) 1px,
-        transparent 1px,
-        transparent 4px
-    );
+    background:
+        repeating-linear-gradient(
+            0deg,
+            rgba(0,255,100,.025),
+            rgba(0,255,100,.025) 1px,
+            transparent 1px,
+            transparent 4px
+        );
+
+    z-index: 5;
 }
-
-/* MAIN */
 
 .container {
-    width: min(1100px, 94%);
+    width: min(1000px, 94%);
     margin: auto;
-    padding: 25px 0 40px;
+    padding: 18px 0 40px;
 }
-
-/* HEADER */
 
 .header {
-    border: 1px solid #00ff66;
-    background: rgba(0, 20, 10, .75);
-    box-shadow:
-        0 0 20px rgba(0,255,100,.15),
-        inset 0 0 20px rgba(0,255,100,.04);
-
-    padding: 22px;
-    border-radius: 14px;
+    border: 1px solid #00ff73;
+    border-radius: 18px;
+    padding: 30px 15px;
     text-align: center;
-    position: relative;
-    overflow: hidden;
-}
 
-.header::before {
-    content: "";
-    position: absolute;
-    width: 100%;
-    height: 2px;
-    background: #00ff66;
-    left: -100%;
-    top: 0;
-    animation: scan 4s linear infinite;
-}
+    background: rgba(0,20,10,.8);
 
-@keyframes scan {
-    to {
-        left: 100%;
-    }
+    box-shadow:
+        0 0 25px rgba(0,255,100,.15),
+        inset 0 0 25px rgba(0,255,100,.04);
 }
 
 .logo {
-    font-size: clamp(27px, 7vw, 55px);
-    font-weight: 900;
+    font-size: clamp(30px,8vw,58px);
+    font-weight: bold;
     letter-spacing: 4px;
 
     text-shadow:
-        0 0 5px #00ff66,
-        0 0 15px #00ff66,
-        0 0 30px rgba(0,255,100,.6);
+        0 0 10px #00ff73,
+        0 0 30px #00ff73;
 }
 
 .subtitle {
-    margin-top: 8px;
-    color: #7dffb0;
-    font-size: 13px;
-    letter-spacing: 3px;
+    margin-top: 10px;
+    color: #7dffad;
+    letter-spacing: 4px;
 }
 
-/* STATUS */
-
-.status-card {
+.status {
     margin-top: 18px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 15px;
 
-    padding: 17px 20px;
+    border: 1px solid #164d2d;
+    border-radius: 14px;
 
-    border: 1px solid rgba(0,255,100,.35);
-    border-radius: 12px;
+    padding: 18px;
 
-    background: rgba(0,10,5,.75);
-}
-
-.status-left {
-    display: flex;
-    align-items: center;
-    gap: 12px;
+    background: rgba(0,15,8,.8);
 }
 
 .dot {
+    display: inline-block;
+
     width: 12px;
     height: 12px;
+
     border-radius: 50%;
+
     background: #777;
-    box-shadow: 0 0 8px #777;
+
+    margin-right: 8px;
 }
 
 .dot.online {
-    background: #00ff66;
+    background: #00ff73;
+
     box-shadow:
-        0 0 8px #00ff66,
-        0 0 20px #00ff66;
+        0 0 10px #00ff73,
+        0 0 25px #00ff73;
 }
-
-.status-text {
-    font-size: 14px;
-}
-
-.server-tag {
-    color: #777;
-    font-size: 11px;
-}
-
-/* GRID */
 
 .grid {
     display: grid;
@@ -192,278 +117,415 @@ body::after {
     margin-top: 18px;
 }
 
-/* PANEL */
-
 .panel {
-    border: 1px solid rgba(0,255,100,.3);
-    background: rgba(0,12,7,.82);
-    border-radius: 14px;
+    border: 1px solid #14552f;
+    border-radius: 15px;
     padding: 20px;
 
-    box-shadow:
-        inset 0 0 30px rgba(0,255,100,.025),
-        0 0 15px rgba(0,0,0,.5);
+    background: rgba(0,15,8,.86);
 }
 
-.panel-title {
-    font-size: 13px;
-    color: #aaffc8;
-    letter-spacing: 2px;
-    margin-bottom: 16px;
+.title {
+    color: #c0ffd7;
+    letter-spacing: 3px;
+    margin-bottom: 18px;
 }
 
-/* PAIRING */
+input,
+textarea {
+    width: 100%;
 
-.pairing-box {
-    min-height: 150px;
+    background: #010302;
 
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
+    border: 1px solid #176136;
+    border-radius: 9px;
 
-    border: 1px dashed rgba(0,255,100,.35);
-    border-radius: 10px;
-    padding: 20px;
-}
+    color: #00ff73;
 
-.pairing-label {
-    font-size: 11px;
-    color: #777;
+    padding: 13px;
+
+    outline: none;
+
+    font-family: monospace;
+
     margin-bottom: 12px;
 }
 
-.code {
-    font-size: clamp(28px, 8vw, 46px);
+textarea {
+    min-height: 130px;
+    resize: vertical;
+}
+
+input:focus,
+textarea:focus {
+    border-color: #00ff73;
+
+    box-shadow:
+        0 0 12px rgba(0,255,100,.2);
+}
+
+button {
+    width: 100%;
+
+    border: 1px solid #00ff73;
+    border-radius: 9px;
+
+    background: #031b0d;
+
+    color: #00ff73;
+
+    padding: 13px;
+
+    font-family: monospace;
     font-weight: bold;
+
+    cursor: pointer;
+
+    margin-top: 5px;
+}
+
+button:hover {
+    background: #06351a;
+
+    box-shadow:
+        0 0 15px rgba(0,255,100,.3);
+}
+
+.codebox {
+    text-align: center;
+
+    border: 1px dashed #176136;
+
+    border-radius: 12px;
+
+    padding: 28px 10px;
+
+    margin-top: 10px;
+}
+
+.code {
+    font-size: 38px;
     letter-spacing: 8px;
-    color: #00ff66;
+    font-weight: bold;
 
     text-shadow:
-        0 0 10px #00ff66,
-        0 0 25px rgba(0,255,100,.7);
+        0 0 10px #00ff73,
+        0 0 25px #00ff73;
 }
 
-.waiting {
+.file {
+    border: 1px dashed #176136;
+    padding: 15px;
+    border-radius: 9px;
+    margin-bottom: 12px;
+}
+
+.json-status {
+    font-size: 12px;
+    margin-top: 10px;
     color: #777;
-    font-size: 13px;
 }
 
-/* TERMINAL */
+.json-status.loaded {
+    color: #00ff73;
+}
+
+.stats {
+    display: grid;
+    grid-template-columns: repeat(3,1fr);
+    gap: 10px;
+}
+
+.stat {
+    text-align: center;
+    border: 1px solid #123e24;
+    border-radius: 10px;
+    padding: 15px;
+}
+
+.stat b {
+    display: block;
+    font-size: 25px;
+    margin-top: 8px;
+}
 
 .terminal {
-    height: 300px;
+    height: 260px;
     overflow-y: auto;
 
     background: #000;
-    border-radius: 9px;
 
-    border: 1px solid #102c1b;
+    border: 1px solid #12351f;
+    border-radius: 10px;
 
     padding: 13px;
 
     font-size: 12px;
-    line-height: 1.7;
-}
 
-.terminal::-webkit-scrollbar {
-    width: 5px;
-}
-
-.terminal::-webkit-scrollbar-thumb {
-    background: #00ff66;
-}
-
-.log-line {
-    color: #5cff9b;
-    word-break: break-word;
-}
-
-.log-line::before {
-    content: "> ";
-    color: #00ff66;
-}
-
-/* INFO */
-
-.info {
-    margin-top: 18px;
-
-    border: 1px solid rgba(0,255,100,.25);
-    border-radius: 12px;
-
-    padding: 17px;
-
-    background: rgba(0,10,5,.7);
-
-    font-size: 12px;
     line-height: 1.8;
 }
 
-.info strong {
-    color: white;
+.log {
+    word-break: break-word;
 }
 
-/* FOOTER */
-
-.footer {
-    text-align: center;
-    margin-top: 22px;
-    color: #315b40;
-    font-size: 11px;
-    letter-spacing: 2px;
+.log:before {
+    content: "> ";
+    color: #00ff73;
 }
 
-/* MOBILE */
+.full {
+    grid-column: 1 / -1;
+}
 
-@media(max-width: 700px) {
-
-    .container {
-        width: 94%;
-        padding-top: 15px;
-    }
+@media(max-width:700px) {
 
     .grid {
         grid-template-columns: 1fr;
     }
 
-    .status-card {
-        align-items: flex-start;
-        flex-direction: column;
+    .full {
+        grid-column: auto;
+    }
+
+    .stats {
+        grid-template-columns: 1fr;
     }
 
     .logo {
         letter-spacing: 2px;
     }
 
-    .terminal {
-        height: 250px;
-    }
 }
 
 </style>
+
 </head>
 
 <body>
 
-<div class="matrix" id="matrix"></div>
-
 <div class="container">
 
-    <!-- HEADER -->
+<header class="header">
 
-    <header class="header">
-
-        <div class="logo">
-            RK RAJA XWD
-        </div>
-
-        <div class="subtitle">
-            // SECURE CONTROL TERMINAL //
-        </div>
-
-    </header>
-
-
-    <!-- STATUS -->
-
-    <section class="status-card">
-
-        <div class="status-left">
-
-            <div id="statusDot" class="dot"></div>
-
-            <div class="status-text">
-                STATUS:
-                <span id="statusText">
-                    CONNECTING...
-                </span>
-            </div>
-
-        </div>
-
-        <div class="server-tag">
-            RK-XWD // LIVE
-        </div>
-
-    </section>
-
-
-    <!-- MAIN GRID -->
-
-    <div class="grid">
-
-        <!-- PAIRING PANEL -->
-
-        <section class="panel">
-
-            <div class="panel-title">
-                [ WHATSAPP PAIRING ]
-            </div>
-
-            <div class="pairing-box">
-
-                <div class="pairing-label">
-                    LINK CODE
-                </div>
-
-                <div id="pairingCode"
-                     class="code">
-                    ----
-                </div>
-
-                <div id="waiting"
-                     class="waiting">
-                    Waiting for pairing code...
-                </div>
-
-            </div>
-
-        </section>
-
-
-        <!-- TERMINAL -->
-
-        <section class="panel">
-
-            <div class="panel-title">
-                [ SYSTEM TERMINAL ]
-            </div>
-
-            <div id="terminal"
-                 class="terminal">
-            </div>
-
-        </section>
-
+    <div class="logo">
+        RK RAJA XWD
     </div>
 
-
-    <!-- INFO -->
-
-    <div class="info">
-
-        <strong>RK RAJA XWD</strong><br>
-
-        Dashboard is connected to the WhatsApp service.
-        Pairing code will appear automatically when a new
-        WhatsApp session requires linking.
-
-        <br><br>
-
-        <strong>STATUS:</strong>
-        <span id="infoStatus">
-            Initializing...
-        </span>
-
+    <div class="subtitle">
+        // SECURE CONTROL TERMINAL //
     </div>
 
+</header>
 
-    <!-- FOOTER -->
 
-    <div class="footer">
-        RK RAJA XWD • SYSTEM ONLINE
+<div class="status">
+
+    <span id="dot" class="dot"></span>
+
+    STATUS:
+    <span id="status">
+        CONNECTING...
+    </span>
+
+</div>
+
+
+<div class="grid">
+
+
+<!-- LOGIN -->
+
+<section class="panel">
+
+<div class="title">
+[ WHATSAPP LOGIN ]
+</div>
+
+<input
+    id="phone"
+    placeholder="+91 9876543210"
+    type="tel"
+>
+
+<button onclick="pair()">
+    GENERATE PAIRING CODE
+</button>
+
+<div class="codebox">
+
+    <div>
+        PAIRING CODE
     </div>
+
+    <div
+        id="code"
+        class="code"
+    >
+        ----
+    </div>
+
+    <small>
+        WhatsApp → Linked Devices →
+        Link with phone number
+    </small>
+
+</div>
+
+</section>
+
+
+<!-- JSON -->
+
+<section class="panel">
+
+<div class="title">
+[ SESSION JSON ]
+</div>
+
+<div class="file">
+
+<input
+    id="jsonFile"
+    type="file"
+    accept=".json,application/json"
+>
+
+<button onclick="uploadJSON()">
+    UPLOAD JSON
+</button>
+
+</div>
+
+<div>
+    OR PASTE JSON
+</div>
+
+<textarea
+    id="jsonText"
+    placeholder='{"example":"value"}'
+></textarea>
+
+<button onclick="pasteJSON()">
+    LOAD PASTED JSON
+</button>
+
+<button onclick="clearJSON()">
+    CLEAR
+</button>
+
+<div
+    id="jsonStatus"
+    class="json-status"
+>
+    ● JSON: NOT LOADED
+</div>
+
+</section>
+
+
+<!-- MESSAGE -->
+
+<section class="panel">
+
+<div class="title">
+[ SEND MESSAGE ]
+</div>
+
+<input
+    id="recipient"
+    placeholder="Number / Group UID"
+>
+
+<input
+    id="header"
+    value="RK RAJA XWD"
+    placeholder="Header Name"
+>
+
+<textarea
+    id="message"
+    placeholder="Message..."
+></textarea>
+
+<label>
+TXT File
+</label>
+
+<input
+    id="txtFile"
+    type="file"
+    accept=".txt"
+>
+
+<label>
+Send Time
+</label>
+
+<input
+    id="sendTime"
+    type="time"
+>
+
+<button onclick="sendMessage()">
+    SEND MESSAGE
+</button>
+
+</section>
+
+
+<!-- DASHBOARD -->
+
+<section class="panel">
+
+<div class="title">
+[ DASHBOARD ]
+</div>
+
+<div class="stats">
+
+<div class="stat">
+Connection
+<b id="connectionStat">
+OFF
+</b>
+</div>
+
+<div class="stat">
+Sent
+<b id="sent">
+0
+</b>
+</div>
+
+<div class="stat">
+Failed
+<b id="failed">
+0
+</b>
+</div>
+
+</div>
+
+</section>
+
+
+<!-- TERMINAL -->
+
+<section class="panel full">
+
+<div class="title">
+[ SYSTEM TERMINAL ]
+</div>
+
+<div
+    id="terminal"
+    class="terminal"
+></div>
+
+</section>
+
+</div>
 
 </div>
 
@@ -471,200 +533,369 @@ body::after {
 <script>
 
 /* =====================================================
-   MATRIX EFFECT
+   HELPERS
 ===================================================== */
 
-const matrix = document.getElementById("matrix");
-
-const chars =
-    "01ABCDEFGHIJKLMNOPQRSTUVWXYZ#$%@&*";
-
-for (let i = 0; i < 45; i++) {
-
-    const span = document.createElement("span");
-
-    span.textContent =
-        Array.from({
-            length: Math.floor(Math.random() * 15) + 5
-        }, () =>
-            chars[Math.floor(Math.random() * chars.length)]
-        ).join("");
-
-    span.style.left =
-        Math.random() * 100 + "%";
-
-    span.style.animationDuration =
-        (Math.random() * 8 + 5) + "s";
-
-    span.style.animationDelay =
-        -(Math.random() * 10) + "s";
-
-    matrix.appendChild(span);
+function show(message) {
+    alert(message);
 }
 
 
 /* =====================================================
-   ELEMENTS
+   PAIR
 ===================================================== */
 
-const statusDot =
-    document.getElementById("statusDot");
+async function pair() {
 
-const statusText =
-    document.getElementById("statusText");
+    const phone =
+        document.getElementById("phone").value;
 
-const pairingCode =
-    document.getElementById("pairingCode");
-
-const waiting =
-    document.getElementById("waiting");
-
-const terminal =
-    document.getElementById("terminal");
-
-const infoStatus =
-    document.getElementById("infoStatus");
-
-
-/* =====================================================
-   TERMINAL UPDATE
-===================================================== */
-
-function renderLogs(logs) {
-
-    terminal.innerHTML = "";
-
-    if (!logs || !logs.length) {
-        terminal.innerHTML =
-            '<div class="log-line">Waiting...</div>';
+    if (!phone.trim()) {
+        show("Phone number enter karo.");
         return;
     }
 
-    logs.forEach(log => {
+    try {
 
-        const div =
-            document.createElement("div");
+        const response =
+            await fetch("/api/pair", {
+                method: "POST",
 
-        div.className = "log-line";
+                headers: {
+                    "Content-Type":
+                        "application/json"
+                },
 
-        div.textContent = log;
+                body: JSON.stringify({
+                    phone
+                })
+            });
 
-        terminal.appendChild(div);
+        const data =
+            await response.json();
+
+        if (!data.ok) {
+            show(data.error || "Pairing failed.");
+            return;
+        }
+
+        if (data.code) {
+            document.getElementById("code")
+                .textContent = data.code;
+        }
+
+    } catch (error) {
+
+        show("Server connection failed.");
+
+    }
+}
+
+
+/* =====================================================
+   JSON PASTE
+===================================================== */
+
+async function pasteJSON() {
+
+    const json =
+        document.getElementById("jsonText")
+            .value;
+
+    if (!json.trim()) {
+        show("JSON paste karo.");
+        return;
+    }
+
+    const response =
+        await fetch("/api/json/paste", {
+
+            method: "POST",
+
+            headers: {
+                "Content-Type":
+                    "application/json"
+            },
+
+            body: JSON.stringify({
+                json
+            })
+        });
+
+    const data =
+        await response.json();
+
+    if (!data.ok) {
+        show(data.error);
+        return;
+    }
+
+    document.getElementById("jsonStatus")
+        .textContent =
+        "● JSON: LOADED";
+
+    document.getElementById("jsonStatus")
+        .classList.add("loaded");
+
+    show("JSON successfully loaded.");
+}
+
+
+/* =====================================================
+   JSON UPLOAD
+===================================================== */
+
+async function uploadJSON() {
+
+    const input =
+        document.getElementById("jsonFile");
+
+    if (!input.files.length) {
+        show("JSON file select karo.");
+        return;
+    }
+
+    const form =
+        new FormData();
+
+    form.append(
+        "jsonFile",
+        input.files[0]
+    );
+
+    const response =
+        await fetch("/api/json/upload", {
+            method: "POST",
+            body: form
+        });
+
+    const data =
+        await response.json();
+
+    if (!data.ok) {
+        show(data.error);
+        return;
+    }
+
+    document.getElementById("jsonStatus")
+        .textContent =
+        "● JSON: LOADED";
+
+    document.getElementById("jsonStatus")
+        .classList.add("loaded");
+
+    show("JSON file loaded.");
+}
+
+
+/* =====================================================
+   CLEAR JSON
+===================================================== */
+
+async function clearJSON() {
+
+    await fetch("/api/json/clear", {
+        method: "POST"
+    });
+
+    document.getElementById("jsonText")
+        .value = "";
+
+    document.getElementById("jsonFile")
+        .value = "";
+
+    document.getElementById("jsonStatus")
+        .textContent =
+        "● JSON: NOT LOADED";
+
+    document.getElementById("jsonStatus")
+        .classList.remove("loaded");
+}
+
+
+/* =====================================================
+   TXT FILE
+===================================================== */
+
+document.getElementById("txtFile")
+    .addEventListener("change", async function() {
+
+        if (!this.files.length) return;
+
+        const file =
+            this.files[0];
+
+        const text =
+            await file.text();
+
+        document.getElementById("message")
+            .value = text;
 
     });
 
-    terminal.scrollTop =
-        terminal.scrollHeight;
+
+/* =====================================================
+   SEND
+===================================================== */
+
+async function sendMessage() {
+
+    const recipient =
+        document.getElementById("recipient")
+            .value;
+
+    const header =
+        document.getElementById("header")
+            .value;
+
+    const message =
+        document.getElementById("message")
+            .value;
+
+    if (!recipient.trim()) {
+        show("Recipient / Group UID enter karo.");
+        return;
+    }
+
+    if (!message.trim()) {
+        show("Message enter karo.");
+        return;
+    }
+
+    const response =
+        await fetch("/api/message", {
+
+            method: "POST",
+
+            headers: {
+                "Content-Type":
+                    "application/json"
+            },
+
+            body: JSON.stringify({
+                recipient,
+                header,
+                message
+            })
+        });
+
+    const data =
+        await response.json();
+
+    if (!data.ok) {
+        show(data.error);
+        return;
+    }
+
+    show("Message sent.");
 }
 
 
 /* =====================================================
-   STATUS
+   LIVE EVENTS
 ===================================================== */
 
-function updateStatus(data) {
+const events =
+    new EventSource("/events");
 
-    if (data.connected) {
+events.onmessage =
+    event => {
 
-        statusDot.classList.add("online");
+        const data =
+            JSON.parse(event.data);
 
-        statusText.textContent =
-            "CONNECTED";
+        const dot =
+            document.getElementById("dot");
 
-        statusText.style.color =
-            "#00ff66";
+        const status =
+            document.getElementById("status");
 
-        infoStatus.textContent =
-            "WhatsApp connection is ONLINE.";
+        if (data.connected) {
 
-        pairingCode.textContent =
-            "ONLINE";
+            dot.classList.add("online");
 
-        waiting.textContent =
-            "Session connected successfully.";
+            status.textContent =
+                "ONLINE";
 
-    } else {
+            status.style.color =
+                "#00ff73";
 
-        statusDot.classList.remove("online");
-
-        statusText.textContent =
-            data.connecting
-                ? "CONNECTING..."
-                : "OFFLINE";
-
-        statusText.style.color =
-            data.connecting
-                ? "#ffe66d"
-                : "#ff5555";
-
-        infoStatus.textContent =
-            data.connecting
-                ? "Waiting for WhatsApp connection..."
-                : "WhatsApp is disconnected.";
-
-        if (data.code) {
-
-            pairingCode.textContent =
-                data.code;
-
-            waiting.textContent =
-                "Enter this code in WhatsApp.";
+            document.getElementById(
+                "connectionStat"
+            ).textContent = "ON";
 
         } else {
 
-            pairingCode.textContent =
-                "----";
+            dot.classList.remove("online");
 
-            waiting.textContent =
-                "Waiting for pairing code...";
+            status.textContent =
+                data.connecting
+                    ? "CONNECTING..."
+                    : "OFFLINE";
 
+            status.style.color =
+                data.connecting
+                    ? "#ffe66d"
+                    : "#ff5555";
+
+            document.getElementById(
+                "connectionStat"
+            ).textContent = "OFF";
         }
 
-    }
+        if (data.pairingCode) {
 
-    renderLogs(data.logs);
-}
-
-
-/* =====================================================
-   SERVER-SENT EVENTS
-===================================================== */
-
-function connectEvents() {
-
-    const events =
-        new EventSource("/events");
-
-    events.onmessage = function(event) {
-
-        try {
-
-            const data =
-                JSON.parse(event.data);
-
-            updateStatus(data);
-
-        } catch (error) {
-
-            console.error(error);
-
+            document.getElementById("code")
+                .textContent =
+                data.pairingCode;
         }
 
+        document.getElementById("sent")
+            .textContent =
+            data.sentCount || 0;
+
+        document.getElementById("failed")
+            .textContent =
+            data.failedCount || 0;
+
+        const jsonStatus =
+            document.getElementById(
+                "jsonStatus"
+            );
+
+        if (data.jsonLoaded) {
+
+            jsonStatus.textContent =
+                "● JSON: LOADED";
+
+            jsonStatus.classList.add(
+                "loaded"
+            );
+        }
+
+        const terminal =
+            document.getElementById(
+                "terminal"
+            );
+
+        terminal.innerHTML = "";
+
+        (data.logs || []).forEach(line => {
+
+            const div =
+                document.createElement("div");
+
+            div.className = "log";
+
+            div.textContent = line;
+
+            terminal.appendChild(div);
+
+        });
+
+        terminal.scrollTop =
+            terminal.scrollHeight;
     };
-
-    events.onerror = function() {
-
-        statusText.textContent =
-            "RECONNECTING...";
-
-        statusText.style.color =
-            "#ffe66d";
-
-    };
-
-}
-
-connectEvents();
 
 </script>
 
