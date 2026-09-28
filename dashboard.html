@@ -1,1548 +1,425 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-
-<meta charset="UTF-8">
-
-<meta
-  name="viewport"
-  content="width=device-width, initial-scale=1.0"
->
-
-<title>RK RAJA XWD</title>
-
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>RK RAJA XWD WhatsApp Dashboard</title>
 <style>
-
-* {
-  box-sizing: border-box;
-}
-
-html,
-body {
-  margin: 0;
-  padding: 0;
-  min-height: 100%;
-  background: #020504;
-  color: #00ff88;
-  font-family:
-    Consolas,
-    "Courier New",
-    monospace;
-}
-
-body {
-  overflow-x: hidden;
-}
-
-/* MATRIX BACKGROUND */
-
-body::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-
-  background:
-    linear-gradient(
-      rgba(0, 255, 100, 0.025) 1px,
-      transparent 1px
-    ),
-    linear-gradient(
-      90deg,
-      rgba(0, 255, 100, 0.025) 1px,
-      transparent 1px
-    );
-
-  background-size: 35px 35px;
-
-  pointer-events: none;
-
-  z-index: -2;
-}
-
-body::after {
-  content: "";
-
-  position: fixed;
-  inset: 0;
-
-  background:
-    radial-gradient(
-      circle at center,
-      rgba(0,255,120,.06),
-      transparent 55%
-    );
-
-  pointer-events: none;
-
-  z-index: -1;
-}
-
-/* HEADER */
-
-.header {
-  padding: 22px 16px;
-
-  text-align: center;
-
-  border-bottom:
-    1px solid rgba(0,255,120,.2);
-
-  background:
-    rgba(0,10,7,.85);
-
-  box-shadow:
-    0 0 30px
-    rgba(0,255,100,.06);
-}
-
-.logo {
-  font-size: 30px;
-  font-weight: 900;
-  letter-spacing: 4px;
-
-  color: #00ff88;
-
-  text-shadow:
-    0 0 8px #00ff88,
-    0 0 25px rgba(0,255,100,.5);
-}
-
-.subtitle {
-  margin-top: 7px;
-
-  font-size: 11px;
-
-  color: #58c996;
-
-  letter-spacing: 2px;
-}
-
-/* CONTAINER */
-
-.container {
-  width: min(1050px, 94%);
-
-  margin:
-    22px auto
-    50px;
-}
-
-/* GRID */
-
-.grid {
-  display: grid;
-
-  grid-template-columns:
-    repeat(
-      auto-fit,
-      minmax(300px, 1fr)
-    );
-
-  gap: 16px;
-}
-
-/* CARD */
-
-.card {
-  border:
-    1px solid
-    rgba(0,255,120,.2);
-
-  background:
-    rgba(2,14,9,.88);
-
-  border-radius: 14px;
-
-  padding: 18px;
-
-  box-shadow:
-    0 0 25px
-    rgba(0,255,100,.04);
-
-  backdrop-filter:
-    blur(8px);
-}
-
-.card h2 {
-  margin:
-    0 0 15px;
-
-  font-size: 15px;
-
-  color: #00ff88;
-
-  letter-spacing: 1px;
-}
-
-/* STATUS */
-
-.status {
-  display: flex;
-
-  align-items: center;
-
-  gap: 10px;
-
-  margin-bottom: 15px;
-}
-
-.dot {
-  width: 12px;
-  height: 12px;
-
-  border-radius: 50%;
-
-  background: #ff3030;
-
-  box-shadow:
-    0 0 10px
-    #ff3030;
-}
-
-.dot.online {
-  background: #00ff88;
-
-  box-shadow:
-    0 0 12px
-    #00ff88;
-}
-
-.statusText {
-  font-weight: bold;
-}
-
-/* INPUTS */
-
-label {
-  display: block;
-
-  margin:
-    13px 0 6px;
-
-  font-size: 11px;
-
-  color: #64dba5;
-
-  text-transform:
-    uppercase;
-
-  letter-spacing: 1px;
-}
-
-input,
-textarea,
-button {
-  font-family:
-    Consolas,
-    "Courier New",
-    monospace;
-}
-
-input,
-textarea {
-  width: 100%;
-
-  border:
-    1px solid
-    rgba(0,255,120,.22);
-
-  background:
-    #020906;
-
-  color: #baffd9;
-
-  border-radius: 9px;
-
-  padding: 12px;
-
-  outline: none;
-}
-
-input:focus,
-textarea:focus {
-  border-color:
-    #00ff88;
-
-  box-shadow:
-    0 0 10px
-    rgba(0,255,120,.12);
-}
-
-textarea {
-  min-height: 120px;
-
-  resize: vertical;
-}
-
-/* BUTTON */
-
-button {
-  width: 100%;
-
-  margin-top: 12px;
-
-  padding: 12px;
-
-  border: 0;
-
-  border-radius: 9px;
-
-  background:
-    #00c96b;
-
-  color: #001b0d;
-
-  font-weight: 900;
-
-  cursor: pointer;
-
-  transition: .2s;
-}
-
-button:hover {
-  background: #00ff88;
-
-  box-shadow:
-    0 0 20px
-    rgba(0,255,120,.25);
-}
-
-button.danger {
-  background:
-    #18221d;
-
-  color: #ff7070;
-
-  border:
-    1px solid
-    rgba(255,80,80,.25);
-}
-
-/* PAIRING */
-
-.pairCode {
-  min-height: 58px;
-
-  display: flex;
-
-  align-items: center;
-
-  justify-content: center;
-
-  margin-top: 15px;
-
-  padding: 10px;
-
-  border:
-    1px dashed
-    rgba(0,255,120,.35);
-
-  border-radius: 10px;
-
-  font-size: 23px;
-
-  letter-spacing: 5px;
-
-  font-weight: bold;
-
-  color: #ffffff;
-
-  background:
-    rgba(0,255,100,.025);
-}
-
-/* FILE */
-
-.fileBox {
-  border:
-    1px dashed
-    rgba(0,255,120,.25);
-
-  padding: 12px;
-
-  border-radius: 10px;
-
-  margin-top: 10px;
-}
-
-/* STATS */
-
-.stats {
-  display: grid;
-
-  grid-template-columns:
-    repeat(2, 1fr);
-
-  gap: 10px;
-}
-
-.stat {
-  padding: 15px;
-
-  border:
-    1px solid
-    rgba(0,255,120,.15);
-
-  border-radius: 10px;
-
-  background:
-    rgba(0,255,100,.025);
-
-  text-align: center;
-}
-
-.statValue {
-  font-size: 24px;
-
-  font-weight: bold;
-
-  color: #fff;
-}
-
-.statLabel {
-  margin-top: 5px;
-
-  font-size: 10px;
-
-  color: #57bd91;
-}
-
-/* TERMINAL */
-
-.terminal {
-  height: 280px;
-
-  overflow-y: auto;
-
-  padding: 14px;
-
-  background:
-    #000;
-
-  border-radius: 10px;
-
-  border:
-    1px solid
-    rgba(0,255,120,.18);
-
-  color: #50ff9b;
-
-  font-size: 12px;
-
-  line-height: 1.65;
-
-  white-space: pre-wrap;
-}
-
-/* JSON */
-
-.jsonArea {
-  min-height: 150px;
-}
-
-/* HELP */
-
-.help {
-  margin-top: 8px;
-
-  color: #527b67;
-
-  font-size: 10px;
-
-  line-height: 1.5;
-}
-
-/* FOOTER */
-
-.footer {
-  text-align: center;
-
-  color: #28543d;
-
-  font-size: 10px;
-
-  padding: 20px;
-}
-
-@media (max-width: 600px) {
-
-  .logo {
-    font-size: 23px;
+  /* ---------- Hacker-style base ---------- */
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #0a0a0a;
+    color: #00ff41;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 14px;
+    padding: 16px;
+    min-height: 100vh;
+  }
+  h1, h2, h3 { color: #00ff41; text-shadow: 0 0 6px #00ff4188; }
+  h1 { font-size: 1.6rem; margin-bottom: 12px; letter-spacing: 2px; }
+  h2 { font-size: 1.1rem; margin-bottom: 8px; border-bottom: 1px dashed #00ff4155; padding-bottom: 4px; }
+  .container { max-width: 1100px; margin: 0 auto; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 800px) { .grid { grid-template-columns: 1fr; } }
+
+  /* ---------- Cards / panels ---------- */
+  .card {
+    background: #0f0f0f;
+    border: 1px solid #00ff4133;
+    border-radius: 6px;
+    padding: 14px;
+    margin-bottom: 16px;
+    box-shadow: 0 0 12px #00ff4111;
   }
 
-  .container {
-    width: 94%;
+  /* ---------- Inputs & buttons ---------- */
+  input, textarea, select {
+    width: 100%;
+    background: #111;
+    border: 1px solid #00ff4144;
+    color: #00ff41;
+    font-family: inherit;
+    font-size: 13px;
+    padding: 8px 10px;
+    border-radius: 4px;
+    outline: none;
+    margin-bottom: 8px;
   }
-
-  .grid {
-    grid-template-columns: 1fr;
+  input:focus, textarea:focus { border-color: #00ff41; box-shadow: 0 0 8px #00ff4155; }
+  textarea { resize: vertical; min-height: 80px; }
+  button {
+    background: #00ff41;
+    color: #000;
+    border: none;
+    padding: 8px 18px;
+    font-family: inherit;
+    font-weight: bold;
+    font-size: 13px;
+    border-radius: 4px;
+    cursor: pointer;
+    letter-spacing: 1px;
+    transition: 0.15s;
+    margin-right: 6px;
+    margin-bottom: 6px;
   }
+  button:hover { background: #00cc33; box-shadow: 0 0 12px #00ff4188; }
+  button.danger { background: #ff3333; color: #fff; }
+  button.danger:hover { background: #cc0000; }
+  button:disabled { background: #333; color: #777; cursor: not-allowed; }
 
-}
+  /* ---------- Stats ---------- */
+  .stats { display: flex; gap: 12px; flex-wrap: wrap; margin: 8px 0; }
+  .stat {
+    flex: 1;
+    min-width: 100px;
+    background: #111;
+    border: 1px solid #00ff4133;
+    border-radius: 4px;
+    padding: 10px;
+    text-align: center;
+  }
+  .stat .label { font-size: 11px; color: #00ff4199; }
+  .stat .value { font-size: 1.4rem; font-weight: bold; margin-top: 2px; }
 
+  /* ---------- Terminal ---------- */
+  #terminal {
+    background: #050505;
+    border: 1px solid #00ff4144;
+    border-radius: 4px;
+    padding: 10px;
+    height: 260px;
+    overflow-y: auto;
+    font-size: 12px;
+    line-height: 1.5;
+    white-space: pre-wrap;
+    word-break: break-all;
+  }
+  #terminal .info { color: #00ff41; }
+  #terminal .success { color: #00ffaa; }
+  #terminal .warn { color: #ffcc00; }
+  #terminal .error { color: #ff4444; }
+
+  /* ---------- Status badge ---------- */
+  .badge {
+    display: inline-block;
+    padding: 3px 12px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: bold;
+    letter-spacing: 1px;
+  }
+  .badge.connected { background: #00ff4133; color: #00ff41; border: 1px solid #00ff41; }
+  .badge.disconnected { background: #ff000033; color: #ff4444; border: 1px solid #ff4444; }
+  .badge.connecting { background: #ffcc0033; color: #ffcc00; border: 1px solid #ffcc00; }
+
+  /* ---------- Pairing code ---------- */
+  #pairingCodeDisplay {
+    font-size: 2rem;
+    letter-spacing: 6px;
+    text-align: center;
+    color: #00ffaa;
+    text-shadow: 0 0 12px #00ffaa88;
+    padding: 12px;
+    border: 1px dashed #00ffaa66;
+    border-radius: 6px;
+    margin: 10px 0;
+    min-height: 50px;
+  }
+  .hidden { display: none; }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .row > * { flex: 1; min-width: 120px; }
+  .small { font-size: 11px; color: #00ff4188; }
 </style>
-
 </head>
-
 <body>
+<div class="container">
 
-<header class="header">
+  <!-- ============ HEADER ============ -->
+  <h1>⟦ RK RAJA XWD ⟧ WHATSAPP DASHBOARD</h1>
+  <p class="small">Pairing Code • Live Terminal • TXT/JSON Sender</p>
 
-  <div class="logo">
-    RK RAJA XWD
+  <!-- ============ PAIRING SECTION ============ -->
+  <div class="card">
+    <h2>◈ PAIRING / CONNECTION</h2>
+    <div class="row">
+      <input type="text" id="phoneInput" placeholder="WhatsApp number (e.g. 919876543210)" />
+      <button id="pairBtn" onclick="requestPairing()">GENERATE PAIRING CODE</button>
+      <button id="reconnectBtn" onclick="reconnect()">RECONNECT</button>
+      <button class="danger" onclick="logout()">LOGOUT</button>
+    </div>
+    <div id="pairingCodeDisplay">— — — —</div>
+    <p>
+      Status: <span id="statusBadge" class="badge disconnected">DISCONNECTED</span>
+    </p>
+    <p class="small">
+      WhatsApp → Linked Devices → Link a Device → <b>Link with phone number</b> →
+      enter the code above.
+    </p>
   </div>
 
-  <div class="subtitle">
-    WHATSAPP CONTROL PANEL
+  <!-- ============ GROUPS / RECIPIENTS ============ -->
+  <div class="card">
+    <h2>◈ RECIPIENTS (Groups &amp; Numbers)</h2>
+    <select id="recipientSelect" size="5" style="min-height:100px;">
+      <option value="">— connected groups will appear here —</option>
+    </select>
+    <p class="small">Select a group, or type a number below.</p>
+    <input type="text" id="recipientInput" placeholder="Group UID or WhatsApp number" />
   </div>
 
-</header>
-
-
-<main class="container">
-
-  <div class="grid">
-
-    <!-- CONNECTION -->
-
-    <section class="card">
-
-      <h2>
-        [01] WHATSAPP CONNECTION
-      </h2>
-
-      <div class="status">
-
-        <span
-          id="statusDot"
-          class="dot"
-        ></span>
-
-        <span
-          id="statusText"
-          class="statusText"
-        >
-          DISCONNECTED
-        </span>
-
-      </div>
-
-      <label>
-        WhatsApp Number
-      </label>
-
-      <input
-        id="phone"
-        type="tel"
-        placeholder="919876543210"
-      >
-
-      <div class="help">
-        Country code ke saath number
-        enter karo. +, spaces aur -
-        ki zarurat nahi.
-      </div>
-
-      <button
-        onclick="generatePairingCode()"
-      >
-        GENERATE PAIRING CODE
-      </button>
-
-      <div
-        id="pairCode"
-        class="pairCode"
-      >
-        ----
-      </div>
-
-      <div class="help">
-        WhatsApp → Linked Devices →
-        Link with phone number par
-        pairing code enter karo.
-      </div>
-
-    </section>
-
-
-    <!-- JSON -->
-
-    <section class="card">
-
-      <h2>
-        [02] JSON
-      </h2>
-
-      <label>
-        Upload JSON File
-      </label>
-
-      <div class="fileBox">
-
-        <input
-          id="jsonFile"
-          type="file"
-          accept=".json,application/json"
-        >
-
-        <button
-          onclick="uploadJSON()"
-        >
-          UPLOAD JSON
-        </button>
-
-      </div>
-
-      <label>
-        Or Paste JSON
-      </label>
-
-      <textarea
-        id="jsonPaste"
-        class="jsonArea"
-        placeholder='{"example":"value"}'
-      ></textarea>
-
-      <button
-        onclick="pasteJSON()"
-      >
-        LOAD PASTED JSON
-      </button>
-
-      <button
-        class="danger"
-        onclick="clearJSON()"
-      >
-        CLEAR JSON
-      </button>
-
-      <div
-        id="jsonStatus"
-        class="help"
-      >
-        JSON: NOT LOADED
-      </div>
-
-    </section>
-
-
-    <!-- MESSAGE -->
-
-    <section class="card">
-
-      <h2>
-        [03] MESSAGE
-      </h2>
-
-      <label>
-        Group UID / WhatsApp Number
-      </label>
-
-      <input
-        id="recipient"
-        type="text"
-        placeholder="120363xxxxxxxx@g.us"
-      >
-
-      <div class="help">
-        Group ke liye @g.us wala Group UID
-        use kar sakte ho.
-      </div>
-
-
-      <label>
-        Here Name
-      </label>
-
-      <input
-        id="hereName"
-        type="text"
-        placeholder="RK RAJA"
-      >
-
-      <div class="help">
-        Jo naam yahan doge, message ke
-        beginning mein show hoga.
-      </div>
-
-
-      <label>
-        Message
-      </label>
-
-      <textarea
-        id="message"
-        placeholder="Apna message yahan likho..."
-      ></textarea>
-
-
-      <label>
-        Send Time
-      </label>
-
-      <input
-        id="sendTime"
-        type="datetime-local"
-      >
-
-      <div class="help">
-        Abhi send karne ke liye field
-        blank bhi chhod sakte ho.
-      </div>
-
-
-      <button
-        onclick="sendMessage()"
-      >
-        SEND MESSAGE
-      </button>
-
-    </section>
-
-
-    <!-- TXT -->
-
-    <section class="card">
-
-      <h2>
-        [04] TXT FILE
-      </h2>
-
-      <label>
-        Upload TXT
-      </label>
-
-      <div class="fileBox">
-
-        <input
-          id="txtFile"
-          type="file"
-          accept=".txt,text/plain"
-        >
-
-        <button
-          onclick="uploadTXT()"
-        >
-          LOAD TXT
-        </button>
-
-      </div>
-
-      <div
-        id="txtStatus"
-        class="help"
-      >
-        TXT: NOT LOADED
-      </div>
-
-    </section>
-
-
-    <!-- STATS -->
-
-    <section class="card">
-
-      <h2>
-        [05] DASHBOARD
-      </h2>
-
-      <div class="stats">
-
-        <div class="stat">
-
-          <div
-            id="sentCount"
-            class="statValue"
-          >
-            0
-          </div>
-
-          <div class="statLabel">
-            SENT
-          </div>
-
-        </div>
-
-        <div class="stat">
-
-          <div
-            id="failedCount"
-            class="statValue"
-          >
-            0
-          </div>
-
-          <div class="statLabel">
-            FAILED
-          </div>
-
-        </div>
-
-        <div class="stat">
-
-          <div
-            id="connectionState"
-            class="statValue"
-          >
-            OFF
-          </div>
-
-          <div class="statLabel">
-            CONNECTION
-          </div>
-
-        </div>
-
-        <div class="stat">
-
-          <div
-            id="jsonState"
-            class="statValue"
-          >
-            OFF
-          </div>
-
-          <div class="statLabel">
-            JSON
-          </div>
-
-        </div>
-
-      </div>
-
-    </section>
-
-
-    <!-- TERMINAL -->
-
-    <section class="card">
-
-      <h2>
-        [06] LIVE TERMINAL
-      </h2>
-
-      <div
-        id="terminal"
-        class="terminal"
-      >RK RAJA XWD SYSTEM READY...
-Connecting event stream...</div>
-
-    </section>
-
+  <!-- ============ MESSAGE COMPOSER ============ -->
+  <div class="card">
+    <h2>◈ MESSAGE SENDER</h2>
+    <div class="row">
+      <input type="text" id="hereName" placeholder="Here Name (e.g. rk raja here)" />
+      <input type="text" id="lastName" placeholder="Last Name (e.g. raja)" />
+      <input type="number" id="sendTime" placeholder="Delay (seconds)" value="0" min="0" />
+    </div>
+
+    <label class="small">TXT file (one message per line)</label>
+    <input type="file" id="txtFile" accept=".txt" />
+
+    <label class="small">JSON paste</label>
+    <textarea id="jsonPaste" placeholder='[{"message":"Hello"}, "World"]'></textarea>
+    <button onclick="clearJson()">CLEAR JSON</button>
+
+    <label class="small">JSON file</label>
+    <input type="file" id="jsonFile" accept=".json" />
+
+    <div style="margin-top:10px;">
+      <button id="startBtn" onclick="startSend()">▶ START</button>
+      <button class="danger" id="stopBtn" onclick="stopSend()">■ STOP</button>
+    </div>
   </div>
 
-</main>
+  <!-- ============ STATS ============ -->
+  <div class="card">
+    <h2>◈ STATISTICS</h2>
+    <div class="stats">
+      <div class="stat"><div class="label">SENT</div><div class="value" id="sentCount">0</div></div>
+      <div class="stat"><div class="label">FAILED</div><div class="value" id="failedCount">0</div></div>
+      <div class="stat"><div class="label">TOTAL</div><div class="value" id="totalCount">0</div></div>
+    </div>
+  </div>
 
+  <!-- ============ LIVE TERMINAL ============ -->
+  <div class="card">
+    <h2>◈ LIVE TERMINAL (SSE)</h2>
+    <div id="terminal"></div>
+  </div>
 
-<footer class="footer">
-  RK RAJA XWD • Dashboard
-</footer>
-
+</div>
 
 <script>
-
-/* ==========================================
-   ELEMENTS
-========================================== */
-
-const terminal =
-  document.getElementById("terminal");
-
-const statusDot =
-  document.getElementById("statusDot");
-
-const statusText =
-  document.getElementById("statusText");
-
-const pairCode =
-  document.getElementById("pairCode");
-
-const sentCount =
-  document.getElementById("sentCount");
-
-const failedCount =
-  document.getElementById("failedCount");
-
-const connectionState =
-  document.getElementById("connectionState");
-
-const jsonState =
-  document.getElementById("jsonState");
-
-const jsonStatus =
-  document.getElementById("jsonStatus");
-
-
-/* ==========================================
-   TERMINAL
-========================================== */
-
-function addLog(message) {
-
-  terminal.textContent +=
-    "\n" + message;
-
-  terminal.scrollTop =
-    terminal.scrollHeight;
-}
-
-
-/* ==========================================
-   STATUS
-========================================== */
-
-function updateStatus(data) {
-
-  const connected =
-    !!data.connected;
-
-  if (connected) {
-
-    statusDot.classList.add(
-      "online"
-    );
-
-    statusText.textContent =
-      "CONNECTED";
-
-    connectionState.textContent =
-      "ON";
-
-  } else {
-
-    statusDot.classList.remove(
-      "online"
-    );
-
-    statusText.textContent =
-      "DISCONNECTED";
-
-    connectionState.textContent =
-      "OFF";
-  }
-
-  if (
-    typeof data.sentCount !==
-    "undefined"
-  ) {
-    sentCount.textContent =
-      data.sentCount;
-  }
-
-  if (
-    typeof data.failedCount !==
-    "undefined"
-  ) {
-    failedCount.textContent =
-      data.failedCount;
-  }
-
-  if (
-    typeof data.jsonLoaded !==
-    "undefined"
-  ) {
-
-    jsonState.textContent =
-      data.jsonLoaded
-        ? "ON"
-        : "OFF";
-
-    jsonStatus.textContent =
-      data.jsonLoaded
-        ? "JSON: LOADED"
-        : "JSON: NOT LOADED";
-  }
-
-  if (data.pairingCode) {
-
-    pairCode.textContent =
-      data.pairingCode;
-  }
-}
-
-
-/* ==========================================
-   SSE
-========================================== */
-
-const events =
-  new EventSource("/events");
-
-events.onmessage =
-  function(event) {
-
-    try {
-
-      const data =
-        JSON.parse(event.data);
-
-      if (data.type === "status") {
-
-        updateStatus(data);
-
-      } else if (
-        data.type === "pairing"
-      ) {
-
-        pairCode.textContent =
-          data.code;
-
-        addLog(
-          "Pairing code: " +
-          data.code
-        );
-
-      } else if (
-        data.type === "log"
-      ) {
-
-        addLog(data.message);
-
-      } else if (
-        data.type === "message_sent"
-      ) {
-
-        sentCount.textContent =
-          data.sentCount;
-
-        addLog(
-          "MESSAGE SENT -> " +
-          data.recipient
-        );
-
-      } else if (
-        data.type === "message_failed"
-      ) {
-
-        failedCount.textContent =
-          data.failedCount;
-
-      } else if (
-        data.type === "json"
-      ) {
-
-        jsonState.textContent =
-          data.loaded
-            ? "ON"
-            : "OFF";
-
-        jsonStatus.textContent =
-          data.loaded
-            ? "JSON: LOADED"
-            : "JSON: NOT LOADED";
-      }
-
-    } catch (err) {
-
-      console.error(err);
-    }
-  };
-
-
-/* ==========================================
-   PAIRING
-========================================== */
-
-async function generatePairingCode() {
-
-  const phone =
-    document
-      .getElementById("phone")
-      .value
-      .trim();
-
-  if (!phone) {
-
-    alert(
-      "WhatsApp number enter karo."
-    );
-
-    return;
-  }
-
-  pairCode.textContent =
-    "WAIT...";
-
-  addLog(
-    "Requesting pairing code..."
-  );
-
-  try {
-
-    const response =
-      await fetch(
-        "/api/pair",
-        {
-          method: "POST",
-
-          headers: {
-            "Content-Type":
-              "application/json"
-          },
-
-          body: JSON.stringify({
-            phone
-          })
-        }
-      );
-
-    const data =
-      await response.json();
-
-    if (!response.ok) {
-
-      throw new Error(
-        data.error ||
-        "Pairing failed."
-      );
-    }
-
+/* ================================================================
+   SSE CONNECTION
+   ================================================================ */
+let evtSource = null;
+let sending = false;
+let stopFlag = false;
+
+function connectSSE() {
+  if (evtSource) evtSource.close();
+  evtSource = new EventSource('/events');
+
+  evtSource.addEventListener('terminal', (e) => {
+    const data = JSON.parse(e.data);
+    appendTerminal(data.time, data.type, data.message);
+  });
+
+  evtSource.addEventListener('status', (e) => {
+    const data = JSON.parse(e.data);
+    updateStatus(data.status);
+  });
+
+  evtSource.addEventListener('pairing', (e) => {
+    const data = JSON.parse(e.data);
     if (data.code) {
-
-      pairCode.textContent =
-        data.code;
-
-      addLog(
-        "PAIRING CODE: " +
-        data.code
-      );
-
+      document.getElementById('pairingCodeDisplay').textContent = formatCode(data.code);
     } else {
-
-      addLog(
-        data.message ||
-        "Pairing request completed."
-      );
+      document.getElementById('pairingCodeDisplay').textContent = '— — — —';
     }
+  });
 
-  } catch (err) {
+  evtSource.addEventListener('groups', (e) => {
+    const groups = JSON.parse(e.data);
+    const sel = document.getElementById('recipientSelect');
+    sel.innerHTML = '';
+    groups.forEach((g) => {
+      const opt = document.createElement('option');
+      opt.value = g.id;
+      opt.textContent = `${g.subject} (${g.id})`;
+      sel.appendChild(opt);
+    });
+  });
 
-    pairCode.textContent =
-      "ERROR";
+  evtSource.addEventListener('sent', (e) => {
+    const data = JSON.parse(e.data);
+    document.getElementById('sentCount').textContent = data.count;
+  });
 
-    addLog(
-      "ERROR: " +
-      err.message
-    );
+  evtSource.addEventListener('failed', (e) => {
+    const data = JSON.parse(e.data);
+    document.getElementById('failedCount').textContent = data.count;
+  });
 
-    alert(err.message);
-  }
+  evtSource.onerror = () => {
+    appendTerminal(new Date().toISOString(), 'warn', 'SSE connection lost. Reconnecting…');
+    setTimeout(connectSSE, 3000);
+  };
 }
 
+/* ================================================================
+   TERMINAL
+   ================================================================ */
+function appendTerminal(time, type, message) {
+  const t = document.getElementById('terminal');
+  const line = document.createElement('div');
+  line.className = type || 'info';
+  line.textContent = `[${time}] ${message}`;
+  t.appendChild(line);
+  t.scrollTop = t.scrollHeight;
+}
 
-/* ==========================================
-   JSON PASTE
-========================================== */
+function updateStatus(status) {
+  const badge = document.getElementById('statusBadge');
+  badge.className = 'badge';
+  const map = {
+    open: ['CONNECTED', 'connected'],
+    connecting: ['CONNECTING', 'connecting'],
+    close: ['CLOSED', 'disconnected'],
+    loggedOut: ['LOGGED OUT', 'disconnected'],
+    restartRequired: ['RESTARTING', 'connecting'],
+    reconnecting: ['RECONNECTING', 'connecting'],
+    disconnected: ['DISCONNECTED', 'disconnected']
+  };
+  const [text, cls] = map[status] || ['UNKNOWN', 'disconnected'];
+  badge.textContent = text;
+  badge.classList.add(cls);
+}
 
-async function pasteJSON() {
-
-  const json =
-    document
-      .getElementById("jsonPaste")
-      .value
-      .trim();
-
-  if (!json) {
-
-    alert(
-      "JSON paste karo."
-    );
-
-    return;
+function formatCode(code) {
+  // Format 8-char code as XXXX-XXXX
+  const clean = String(code).replace(/-/g, '');
+  if (clean.length === 8) {
+    return clean.slice(0, 4) + '-' + clean.slice(4);
   }
+  return code;
+}
+
+/* ================================================================
+   PAIRING
+   ================================================================ */
+async function requestPairing() {
+  const number = document.getElementById('phoneInput').value.trim();
+  if (!number) return alert('Please enter your WhatsApp number.');
+  document.getElementById('pairingCodeDisplay').textContent = 'Generating…';
+  appendTerminal(new Date().toISOString(), 'info', `Requesting pairing code for ${number}…`);
 
   try {
-
-    const response =
-      await fetch(
-        "/api/json/paste",
-        {
-          method: "POST",
-
-          headers: {
-            "Content-Type":
-              "application/json"
-          },
-
-          body: JSON.stringify({
-            json
-          })
-        }
-      );
-
-    const data =
-      await response.json();
-
-    if (!response.ok) {
-
-      throw new Error(
-        data.error ||
-        "JSON failed."
-      );
+    const res = await fetch('/api/pair', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ number })
+    });
+    const data = await res.json();
+    if (data.success) {
+      document.getElementById('pairingCodeDisplay').textContent = formatCode(data.code);
+      appendTerminal(new Date().toISOString(), 'success', `Pairing code: ${data.code}`);
+    } else {
+      document.getElementById('pairingCodeDisplay').textContent = '❌ FAILED';
+      appendTerminal(new Date().toISOString(), 'error', data.error || 'Pairing failed');
     }
-
-    jsonState.textContent =
-      "ON";
-
-    jsonStatus.textContent =
-      "JSON: LOADED";
-
-    addLog(
-      "JSON pasted successfully."
-    );
-
-  } catch (err) {
-
-    alert(err.message);
-
-    addLog(
-      "JSON ERROR: " +
-      err.message
-    );
+  } catch (e) {
+    document.getElementById('pairingCodeDisplay').textContent = '❌ ERROR';
+    appendTerminal(new Date().toISOString(), 'error', e.message);
   }
 }
 
+async function reconnect() {
+  appendTerminal(new Date().toISOString(), 'info', 'Manual reconnect requested…');
+  await fetch('/api/reconnect', { method: 'POST' });
+}
 
-/* ==========================================
-   JSON UPLOAD
-========================================== */
+async function logout() {
+  if (!confirm('Logout and clear session?')) return;
+  await fetch('/api/logout', { method: 'POST' });
+  appendTerminal(new Date().toISOString(), 'warn', 'Logged out.');
+}
 
-async function uploadJSON() {
+/* ================================================================
+   SEND
+   ================================================================ */
+function clearJson() {
+  document.getElementById('jsonPaste').value = '';
+  appendTerminal(new Date().toISOString(), 'info', 'JSON cleared.');
+}
 
-  const file =
-    document
-      .getElementById("jsonFile")
-      .files[0];
+async function startSend() {
+  if (sending) return alert('Already sending…');
+  const recipientSel = document.getElementById('recipientSelect').value;
+  const recipientInput = document.getElementById('recipientInput').value.trim();
+  const recipient = recipientSel || recipientInput;
 
-  if (!file) {
+  if (!recipient) return alert('Please select or enter a recipient.');
 
-    alert(
-      "JSON file select karo."
-    );
+  const hereName = document.getElementById('hereName').value.trim();
+  const lastName = document.getElementById('lastName').value.trim();
+  const sendTime = document.getElementById('sendTime').value || '0';
+  const txtFile = document.getElementById('txtFile').files[0];
+  const jsonFile = document.getElementById('jsonFile').files[0];
+  const jsonPaste = document.getElementById('jsonPaste').value.trim();
 
-    return;
+  if (!txtFile && !jsonFile && !jsonPaste) {
+    return alert('Please provide a TXT file, JSON file, or JSON paste.');
   }
 
-  const formData =
-    new FormData();
+  const formData = new FormData();
+  formData.append('recipient', recipient);
+  formData.append('hereName', hereName);
+  formData.append('lastName', lastName);
+  formData.append('sendTime', sendTime);
+  if (txtFile) formData.append('txtFile', txtFile);
+  if (jsonFile) formData.append('jsonFile', jsonFile);
+  if (jsonPaste) formData.append('jsonPaste', jsonPaste);
 
-  formData.append(
-    "jsonFile",
-    file
-  );
+  sending = true;
+  stopFlag = false;
+  document.getElementById('startBtn').disabled = true;
+  document.getElementById('sentCount').textContent = '0';
+  document.getElementById('failedCount').textContent = '0';
+
+  appendTerminal(new Date().toISOString(), 'info', 'Starting send…');
 
   try {
-
-    const response =
-      await fetch(
-        "/api/json/upload",
-        {
-          method: "POST",
-          body: formData
-        }
-      );
-
-    const data =
-      await response.json();
-
-    if (!response.ok) {
-
-      throw new Error(
-        data.error ||
-        "Upload failed."
-      );
+    const res = await fetch('/api/send', { method: 'POST', body: formData });
+    const data = await res.json();
+    if (data.success) {
+      document.getElementById('totalCount').textContent = data.total;
+      appendTerminal(new Date().toISOString(), 'success',
+        `Done. Sent: ${data.sent}, Failed: ${data.failed}, Total: ${data.total}`);
+    } else {
+      appendTerminal(new Date().toISOString(), 'error', data.error || 'Send failed');
     }
-
-    jsonState.textContent =
-      "ON";
-
-    jsonStatus.textContent =
-      "JSON: LOADED";
-
-    addLog(
-      "JSON uploaded: " +
-      data.filename
-    );
-
-  } catch (err) {
-
-    alert(err.message);
-
-    addLog(
-      "JSON ERROR: " +
-      err.message
-    );
+  } catch (e) {
+    appendTerminal(new Date().toISOString(), 'error', e.message);
+  } finally {
+    sending = false;
+    document.getElementById('startBtn').disabled = false;
   }
 }
 
-
-/* ==========================================
-   CLEAR JSON
-========================================== */
-
-async function clearJSON() {
-
-  try {
-
-    const response =
-      await fetch(
-        "/api/json/clear",
-        {
-          method: "POST"
-        }
-      );
-
-    const data =
-      await response.json();
-
-    if (!response.ok) {
-
-      throw new Error(
-        data.error ||
-        "Clear failed."
-      );
-    }
-
-    jsonState.textContent =
-      "OFF";
-
-    jsonStatus.textContent =
-      "JSON: NOT LOADED";
-
-    document
-      .getElementById("jsonPaste")
-      .value = "";
-
-    addLog(
-      "JSON cleared."
-    );
-
-  } catch (err) {
-
-    alert(err.message);
-  }
+function stopSend() {
+  stopFlag = true;
+  appendTerminal(new Date().toISOString(), 'warn', 'Stop requested.');
+  // The server will finish current message; this is a best-effort flag
 }
 
-
-/* ==========================================
-   TXT
-========================================== */
-
-async function uploadTXT() {
-
-  const file =
-    document
-      .getElementById("txtFile")
-      .files[0];
-
-  if (!file) {
-
-    alert(
-      "TXT file select karo."
-    );
-
-    return;
-  }
-
-  const formData =
-    new FormData();
-
-  formData.append(
-    "txtFile",
-    file
-  );
-
-  try {
-
-    const response =
-      await fetch(
-        "/api/txt/upload",
-        {
-          method: "POST",
-          body: formData
-        }
-      );
-
-    const data =
-      await response.json();
-
-    if (!response.ok) {
-
-      throw new Error(
-        data.error ||
-        "TXT upload failed."
-      );
-    }
-
-    document
-      .getElementById("txtStatus")
-      .textContent =
-      `TXT: ${data.lines} lines loaded`;
-
-    addLog(
-      `TXT loaded: ${data.filename} (${data.lines} lines)`
-    );
-
-  } catch (err) {
-
-    alert(err.message);
-
-    addLog(
-      "TXT ERROR: " +
-      err.message
-    );
-  }
-}
-
-
-/* ==========================================
-   SEND MESSAGE
-========================================== */
-
-async function sendMessage() {
-
-  const recipient =
-    document
-      .getElementById("recipient")
-      .value
-      .trim();
-
-  const hereName =
-    document
-      .getElementById("hereName")
-      .value
-      .trim();
-
-  const message =
-    document
-      .getElementById("message")
-      .value
-      .trim();
-
-  const sendTime =
-    document
-      .getElementById("sendTime")
-      .value;
-
-  if (!recipient) {
-
-    alert(
-      "Group UID / WhatsApp number enter karo."
-    );
-
-    return;
-  }
-
-  if (!message) {
-
-    alert(
-      "Message enter karo."
-    );
-
-    return;
-  }
-
-  /*
-    Send Time blank:
-    immediately send.
-
-    Future time:
-    is simple dashboard version
-    sends immediately only when
-    the button is pressed.
-  */
-
-  if (sendTime) {
-
-    const selected =
-      new Date(sendTime);
-
-    if (
-      !Number.isNaN(
-        selected.getTime()
-      ) &&
-      selected > new Date()
-    ) {
-
-      alert(
-        "Scheduled sending ke liye server-side scheduler configure karna hoga. Abhi SEND MESSAGE button immediate send karta hai."
-      );
-
-      return;
-    }
-  }
-
-  try {
-
-    const response =
-      await fetch(
-        "/api/message",
-        {
-          method: "POST",
-
-          headers: {
-            "Content-Type":
-              "application/json"
-          },
-
-          body: JSON.stringify({
-            recipient,
-            hereName,
-            message
-          })
-        }
-      );
-
-    const data =
-      await response.json();
-
-    if (!response.ok) {
-
-      throw new Error(
-        data.error ||
-        "Message send failed."
-      );
-    }
-
-    addLog(
-      "Message sent successfully -> " +
-      data.recipient
-    );
-
-    alert(
-      "Message sent successfully."
-    );
-
-  } catch (err) {
-
-    addLog(
-      "SEND ERROR: " +
-      err.message
-    );
-
-    alert(err.message);
-  }
-}
-
-
-/* ==========================================
-   INITIAL STATUS
-========================================== */
-
-fetch("/api/status")
-  .then(r => r.json())
-  .then(data => {
-    updateStatus(data);
-
-    if (data.pairingCode) {
-      pairCode.textContent =
-        data.pairingCode;
-    }
-  })
-  .catch(() => {});
-
+/* ================================================================
+   INIT
+   ================================================================ */
+connectSSE();
+appendTerminal(new Date().toISOString(), 'info', 'RK RAJA XWD dashboard ready.');
 </script>
-
 </body>
 </html>
