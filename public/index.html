@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>RK RAJA XWD</title>
+
+<style>
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html,
+body {
+    width: 100%;
+    min-height: 100%;
+}
+
+body {
+    background:
+        radial-gradient(circle at 50% 0%, rgba(0,255,100,.08), transparent 35%),
+        radial-gradient(circle at 10% 90%, rgba(0,255,180,.05), transparent 30%),
+        #020403;
+
+    color: #00ff88;
+    font-family: "Courier New", monospace;
+    overflow-x: hidden;
+}
+
+/* MATRIX BACKGROUND */
+
+.matrix {
+    position: fixed;
+    inset: 0;
+    z-index: -2;
+    opacity: .13;
+    overflow: hidden;
+}
+
+.matrix span {
+    position: absolute;
+    top: -100px;
+    color: #00ff66;
+    font-size: 14px;
+    animation: rain linear infinite;
+}
+
+@keyframes rain {
+    from {
+        transform: translateY(-120px);
+    }
+
+    to {
+        transform: translateY(110vh);
+    }
+}
+
+/* SCANLINES */
+
+body::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 20;
+
+    background: repeating-linear-gradient(
+        to bottom,
+        rgba(255,255,255,0.015) 0px,
+        rgba(255,255,255,0.015) 1px,
+        transparent 1px,
+        transparent 4px
+    );
+}
+
+/* MAIN */
+
+.container {
+    width: min(1100px, 94%);
+    margin: auto;
+    padding: 25px 0 40px;
+}
+
+/* HEADER */
+
+.header {
+    border: 1px solid #00ff66;
+    background: rgba(0, 20, 10, .75);
+    box-shadow:
+        0 0 20px rgba(0,255,100,.15),
+        inset 0 0 20px rgba(0,255,100,.04);
+
+    padding: 22px;
+    border-radius: 14px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.header::before {
+    content: "";
+    position: absolute;
+    width: 100%;
+    height: 2px;
+    background: #00ff66;
+    left: -100%;
+    top: 0;
+    animation: scan 4s linear infinite;
+}
+
+@keyframes scan {
+    to {
+        left: 100%;
+    }
+}
+
+.logo {
+    font-size: clamp(27px, 7vw, 55px);
+    font-weight: 900;
+    letter-spacing: 4px;
+
+    text-shadow:
+        0 0 5px #00ff66,
+        0 0 15px #00ff66,
+        0 0 30px rgba(0,255,100,.6);
+}
+
+.subtitle {
+    margin-top: 8px;
+    color: #7dffb0;
+    font-size: 13px;
+    letter-spacing: 3px;
+}
+
+/* STATUS */
+
+.status-card {
+    margin-top: 18px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
+
+    padding: 17px 20px;
+
+    border: 1px solid rgba(0,255,100,.35);
+    border-radius: 12px;
+
+    background: rgba(0,10,5,.75);
+}
+
+.status-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #777;
+    box-shadow: 0 0 8px #777;
+}
+
+.dot.online {
+    background: #00ff66;
+    box-shadow:
+        0 0 8px #00ff66,
+        0 0 20px #00ff66;
+}
+
+.status-text {
+    font-size: 14px;
+}
+
+.server-tag {
+    color: #777;
+    font-size: 11px;
+}
+
+/* GRID */
+
+.grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+    margin-top: 18px;
+}
+
+/* PANEL */
+
+.panel {
+    border: 1px solid rgba(0,255,100,.3);
+    background: rgba(0,12,7,.82);
+    border-radius: 14px;
+    padding: 20px;
+
+    box-shadow:
+        inset 0 0 30px rgba(0,255,100,.025),
+        0 0 15px rgba(0,0,0,.5);
+}
+
+.panel-title {
+    font-size: 13px;
+    color: #aaffc8;
+    letter-spacing: 2px;
+    margin-bottom: 16px;
+}
+
+/* PAIRING */
+
+.pairing-box {
+    min-height: 150px;
+
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+
+    border: 1px dashed rgba(0,255,100,.35);
+    border-radius: 10px;
+    padding: 20px;
+}
+
+.pairing-label {
+    font-size: 11px;
+    color: #777;
+    margin-bottom: 12px;
+}
+
+.code {
+    font-size: clamp(28px, 8vw, 46px);
+    font-weight: bold;
+    letter-spacing: 8px;
+    color: #00ff66;
+
+    text-shadow:
+        0 0 10px #00ff66,
+        0 0 25px rgba(0,255,100,.7);
+}
+
+.waiting {
+    color: #777;
+    font-size: 13px;
+}
+
+/* TERMINAL */
+
+.terminal {
+    height: 300px;
+    overflow-y: auto;
+
+    background: #000;
+    border-radius: 9px;
+
+    border: 1px solid #102c1b;
+
+    padding: 13px;
+
+    font-size: 12px;
+    line-height: 1.7;
+}
+
+.terminal::-webkit-scrollbar {
+    width: 5px;
+}
+
+.terminal::-webkit-scrollbar-thumb {
+    background: #00ff66;
+}
+
+.log-line {
+    color: #5cff9b;
+    word-break: break-word;
+}
+
+.log-line::before {
+    content: "> ";
+    color: #00ff66;
+}
+
+/* INFO */
+
+.info {
+    margin-top: 18px;
+
+    border: 1px solid rgba(0,255,100,.25);
+    border-radius: 12px;
+
+    padding: 17px;
+
+    background: rgba(0,10,5,.7);
+
+    font-size: 12px;
+    line-height: 1.8;
+}
+
+.info strong {
+    color: white;
+}
+
+/* FOOTER */
+
+.footer {
+    text-align: center;
+    margin-top: 22px;
+    color: #315b40;
+    font-size: 11px;
+    letter-spacing: 2px;
+}
+
+/* MOBILE */
+
+@media(max-width: 700px) {
+
+    .container {
+        width: 94%;
+        padding-top: 15px;
+    }
+
+    .grid {
+        grid-template-columns: 1fr;
+    }
+
+    .status-card {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .logo {
+        letter-spacing: 2px;
+    }
+
+    .terminal {
+        height: 250px;
+    }
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="matrix" id="matrix"></div>
+
+<div class="container">
+
+    <!-- HEADER -->
+
+    <header class="header">
+
+        <div class="logo">
+            RK RAJA XWD
+        </div>
+
+        <div class="subtitle">
+            // SECURE CONTROL TERMINAL //
+        </div>
+
+    </header>
+
+
+    <!-- STATUS -->
+
+    <section class="status-card">
+
+        <div class="status-left">
+
+            <div id="statusDot" class="dot"></div>
+
+            <div class="status-text">
+                STATUS:
+                <span id="statusText">
+                    CONNECTING...
+                </span>
+            </div>
+
+        </div>
+
+        <div class="server-tag">
+            RK-XWD // LIVE
+        </div>
+
+    </section>
+
+
+    <!-- MAIN GRID -->
+
+    <div class="grid">
+
+        <!-- PAIRING PANEL -->
+
+        <section class="panel">
+
+            <div class="panel-title">
+                [ WHATSAPP PAIRING ]
+            </div>
+
+            <div class="pairing-box">
+
+                <div class="pairing-label">
+                    LINK CODE
+                </div>
+
+                <div id="pairingCode"
+                     class="code">
+                    ----
+                </div>
+
+                <div id="waiting"
+                     class="waiting">
+                    Waiting for pairing code...
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- TERMINAL -->
+
+        <section class="panel">
+
+            <div class="panel-title">
+                [ SYSTEM TERMINAL ]
+            </div>
+
+            <div id="terminal"
+                 class="terminal">
+            </div>
+
+        </section>
+
+    </div>
+
+
+    <!-- INFO -->
+
+    <div class="info">
+
+        <strong>RK RAJA XWD</strong><br>
+
+        Dashboard is connected to the WhatsApp service.
+        Pairing code will appear automatically when a new
+        WhatsApp session requires linking.
+
+        <br><br>
+
+        <strong>STATUS:</strong>
+        <span id="infoStatus">
+            Initializing...
+        </span>
+
+    </div>
+
+
+    <!-- FOOTER -->
+
+    <div class="footer">
+        RK RAJA XWD • SYSTEM ONLINE
+    </div>
+
+</div>
+
+
+<script>
+
+/* =====================================================
+   MATRIX EFFECT
+===================================================== */
+
+const matrix = document.getElementById("matrix");
+
+const chars =
+    "01ABCDEFGHIJKLMNOPQRSTUVWXYZ#$%@&*";
+
+for (let i = 0; i < 45; i++) {
+
+    const span = document.createElement("span");
+
+    span.textContent =
+        Array.from({
+            length: Math.floor(Math.random() * 15) + 5
+        }, () =>
+            chars[Math.floor(Math.random() * chars.length)]
+        ).join("");
+
+    span.style.left =
+        Math.random() * 100 + "%";
+
+    span.style.animationDuration =
+        (Math.random() * 8 + 5) + "s";
+
+    span.style.animationDelay =
+        -(Math.random() * 10) + "s";
+
+    matrix.appendChild(span);
+}
+
+
+/* =====================================================
+   ELEMENTS
+===================================================== */
+
+const statusDot =
+    document.getElementById("statusDot");
+
+const statusText =
+    document.getElementById("statusText");
+
+const pairingCode =
+    document.getElementById("pairingCode");
+
+const waiting =
+    document.getElementById("waiting");
+
+const terminal =
+    document.getElementById("terminal");
+
+const infoStatus =
+    document.getElementById("infoStatus");
+
+
+/* =====================================================
+   TERMINAL UPDATE
+===================================================== */
+
+function renderLogs(logs) {
+
+    terminal.innerHTML = "";
+
+    if (!logs || !logs.length) {
+        terminal.innerHTML =
+            '<div class="log-line">Waiting...</div>';
+        return;
+    }
+
+    logs.forEach(log => {
+
+        const div =
+            document.createElement("div");
+
+        div.className = "log-line";
+
+        div.textContent = log;
+
+        terminal.appendChild(div);
+
+    });
+
+    terminal.scrollTop =
+        terminal.scrollHeight;
+}
+
+
+/* =====================================================
+   STATUS
+===================================================== */
+
+function updateStatus(data) {
+
+    if (data.connected) {
+
+        statusDot.classList.add("online");
+
+        statusText.textContent =
+            "CONNECTED";
+
+        statusText.style.color =
+            "#00ff66";
+
+        infoStatus.textContent =
+            "WhatsApp connection is ONLINE.";
+
+        pairingCode.textContent =
+            "ONLINE";
+
+        waiting.textContent =
+            "Session connected successfully.";
+
+    } else {
+
+        statusDot.classList.remove("online");
+
+        statusText.textContent =
+            data.connecting
+                ? "CONNECTING..."
+                : "OFFLINE";
+
+        statusText.style.color =
+            data.connecting
+                ? "#ffe66d"
+                : "#ff5555";
+
+        infoStatus.textContent =
+            data.connecting
+                ? "Waiting for WhatsApp connection..."
+                : "WhatsApp is disconnected.";
+
+        if (data.code) {
+
+            pairingCode.textContent =
+                data.code;
+
+            waiting.textContent =
+                "Enter this code in WhatsApp.";
+
+        } else {
+
+            pairingCode.textContent =
+                "----";
+
+            waiting.textContent =
+                "Waiting for pairing code...";
+
+        }
+
+    }
+
+    renderLogs(data.logs);
+}
+
+
+/* =====================================================
+   SERVER-SENT EVENTS
+===================================================== */
+
+function connectEvents() {
+
+    const events =
+        new EventSource("/events");
+
+    events.onmessage = function(event) {
+
+        try {
+
+            const data =
+                JSON.parse(event.data);
+
+            updateStatus(data);
+
+        } catch (error) {
+
+            console.error(error);
+
+        }
+
+    };
+
+    events.onerror = function() {
+
+        statusText.textContent =
+            "RECONNECTING...";
+
+        statusText.style.color =
+            "#ffe66d";
+
+    };
+
+}
+
+connectEvents();
+
+</script>
+
+</body>
+</html>
