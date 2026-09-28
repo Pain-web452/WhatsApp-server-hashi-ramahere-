@@ -1,42 +1,42 @@
 const express = require("express");
 const path = require("path");
+const multer = require("multer");
+
 const {
     default: makeWASocket,
     useMultiFileAuthState,
     DisconnectReason
 } = require("@whiskeysockets/baileys");
+
 const { Boom } = require("@hapi/boom");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// =====================================================
-// RK RAJA XWD — CONFIG
-// =====================================================
+const upload = multer({
+    storage: multer.memoryStorage(),
+    limits: {
+        fileSize: 2 * 1024 * 1024
+    }
+});
 
-// Render Environment Variable se number lena recommended hai.
-// Example: 919876543210
-const PHONE_NUMBER = process.env.PHONE_NUMBER || "";
+app.use(express.json({ limit: "2mb" }));
+app.use(express.urlencoded({ extended: true }));
+app.use(express.static(__dirname));
 
-const AUTH_DIR = path.join(__dirname, "auth_info_baileys");
-
+let sock = null;
 let pairingCode = null;
-let isConnected = false;
-let isConnecting = false;
-let sseClients = [];
-let socketInstance = null;
-let reconnectTimer = null;
+let connected = false;
+let connecting = false;
+let phoneNumber = "";
+let jsonLoaded = false;
 
-let logs = [
-    "[SYSTEM] RK RAJA XWD dashboard initialized",
-    "[SYSTEM] Waiting for WhatsApp connection..."
-];
+let sentCount = 0;
+let failedCount = 0;
 
-// =====================================================
-// LOGGING
-// =====================================================
+let logs = [];
 
-function addLog(message) {
+function log(message) {
     const time = new Date().toLocaleTimeString("en-IN", {
         hour12: false
     });
@@ -47,243 +47,476 @@ function addLog(message) {
 
     logs.push(line);
 
-    if (logs.length > 80) {
+    if (logs.length > 100) {
         logs.shift();
     }
 
-    broadcastState();
+    broadcast();
 }
 
-// =====================================================
-// SSE
-// =====================================================
+const clients = [];
+
+function broadcast() {
+    const data = JSON.stringify({
+        connected,
+        connecting,
+        pairingCode,
+        jsonLoaded,
+        sentCount,
+        failedCount,
+        logs
+    });
+
+    clients.forEach(res => {
+        try {
+            res.write(`data: ${data}\n\n`);
+        } catch (_) {}
+    });
+}
 
 app.get("/events", (req, res) => {
     res.setHeader("Content-Type", "text/event-stream");
     res.setHeader("Cache-Control", "no-cache");
     res.setHeader("Connection", "keep-alive");
+
     res.flushHeaders();
 
-    const payload = {
-        code: pairingCode,
-        connected: isConnected,
-        connecting: isConnecting,
-        logs
-    };
+    clients.push(res);
 
-    res.write(`data: ${JSON.stringify(payload)}\n\n`);
-
-    sseClients.push(res);
+    res.write(
+        `data: ${JSON.stringify({
+            connected,
+            connecting,
+            pairingCode,
+            jsonLoaded,
+            sentCount,
+            failedCount,
+            logs
+        })}\n\n`
+    );
 
     req.on("close", () => {
-        sseClients = sseClients.filter(client => client !== res);
+        const index = clients.indexOf(res);
+
+        if (index !== -1) {
+            clients.splice(index, 1);
+        }
     });
 });
-
-function broadcastState() {
-    const payload = JSON.stringify({
-        code: pairingCode,
-        connected: isConnected,
-        connecting: isConnecting,
-        logs
-    });
-
-    sseClients.forEach(client => {
-        try {
-            client.write(`data: ${payload}\n\n`);
-        } catch (_) {}
-    });
-}
-
-// =====================================================
-// DASHBOARD
-// =====================================================
 
 app.get("/", (req, res) => {
     res.sendFile(path.join(__dirname, "dashboard.html"));
 });
 
-app.get("/health", (req, res) => {
-    res.json({
-        status: "online",
-        project: "RK RAJA XWD",
-        whatsappConnected: isConnected,
-        serverTime: new Date().toISOString()
-    });
-});
+/* =====================================================
+   PAIRING CODE
+===================================================== */
 
-// =====================================================
-// WHATSAPP CONNECTION
-// =====================================================
-
-async function connectToWhatsApp() {
-    if (isConnecting) return;
-
-    isConnecting = true;
-    broadcastState();
-
+app.post("/api/pair", async (req, res) => {
     try {
-        addLog("[BAILEYS] Loading authentication state...");
+        let number = String(req.body.phone || "");
 
-        const { state, saveCreds } =
-            await useMultiFileAuthState(AUTH_DIR);
+        number = number.replace(/[^\d]/g, "");
 
-        const sock = makeWASocket({
-            auth: state,
-            printQRInTerminal: false,
-            browser: ["RK RAJA XWD", "Chrome", "1.0.0"],
-            markOnlineOnConnect: false
-        });
+        if (number.length < 8) {
+            return res.status(400).json({
+                ok: false,
+                error: "Invalid phone number"
+            });
+        }
 
-        socketInstance = sock;
+        phoneNumber = number;
 
-        sock.ev.on("creds.update", saveCreds);
+        log("[AUTH] Pairing request received.");
 
-        sock.ev.on("connection.update", async (update) => {
-            const {
-                connection,
-                lastDisconnect,
-                qr
-            } = update;
+        if (!sock) {
+            await startWhatsApp();
+        }
 
-            // -------------------------------------------------
-            // REQUEST PAIRING CODE
-            // -------------------------------------------------
+        if (!sock) {
+            return res.status(500).json({
+                ok: false,
+                error: "WhatsApp socket unavailable"
+            });
+        }
 
-            if (
-                qr &&
-                !sock.authState?.creds?.registered
-            ) {
-                if (!PHONE_NUMBER) {
-                    addLog(
-                        "[ERROR] PHONE_NUMBER environment variable is missing."
-                    );
-                    addLog(
-                        "[INFO] Render → Environment → PHONE_NUMBER add karo."
-                    );
+        if (sock.authState?.creds?.registered) {
+            return res.json({
+                ok: true,
+                connected: connected,
+                message: "Existing WhatsApp session found."
+            });
+        }
 
-                    isConnecting = false;
-                    broadcastState();
-                    return;
-                }
+        log("[AUTH] Requesting pairing code...");
 
-                try {
-                    const cleanNumber =
-                        PHONE_NUMBER.replace(/[^\d]/g, "");
+        const code = await sock.requestPairingCode(number);
 
-                    if (cleanNumber.length < 8) {
-                        addLog("[ERROR] PHONE_NUMBER invalid hai.");
-                        return;
-                    }
+        pairingCode = code;
 
-                    addLog("[WHATSAPP] Requesting pairing code...");
+        log("[AUTH] Pairing code generated.");
 
-                    const code =
-                        await sock.requestPairingCode(cleanNumber);
+        broadcast();
 
-                    pairingCode = code;
-
-                    addLog(
-                        `[WHATSAPP] Pairing code generated: ${code}`
-                    );
-
-                    broadcastState();
-                } catch (error) {
-                    addLog(
-                        `[ERROR] Pairing code failed: ${error.message}`
-                    );
-                }
-            }
-
-            // -------------------------------------------------
-            // CONNECTED
-            // -------------------------------------------------
-
-            if (connection === "open") {
-                isConnected = true;
-                isConnecting = false;
-                pairingCode = null;
-
-                addLog("[SUCCESS] WhatsApp connection opened.");
-                addLog("[SYSTEM] RK RAJA XWD is ONLINE.");
-
-                broadcastState();
-            }
-
-            // -------------------------------------------------
-            // CLOSED
-            // -------------------------------------------------
-
-            if (connection === "close") {
-                isConnected = false;
-                isConnecting = false;
-
-                const statusCode =
-                    lastDisconnect?.error instanceof Boom
-                        ? lastDisconnect.error.output.statusCode
-                        : null;
-
-                const loggedOut =
-                    statusCode === DisconnectReason.loggedOut;
-
-                pairingCode = null;
-
-                if (loggedOut) {
-                    addLog(
-                        "[WHATSAPP] Logged out. Authentication required again."
-                    );
-                    broadcastState();
-                    return;
-                }
-
-                addLog(
-                    "[WHATSAPP] Connection closed. Reconnecting..."
-                );
-
-                broadcastState();
-
-                if (reconnectTimer) {
-                    clearTimeout(reconnectTimer);
-                }
-
-                reconnectTimer = setTimeout(() => {
-                    connectToWhatsApp();
-                }, 5000);
-            }
+        res.json({
+            ok: true,
+            code
         });
 
     } catch (error) {
-        isConnecting = false;
-        isConnected = false;
+        log("[ERROR] Pairing failed.");
 
-        addLog(
-            `[FATAL] WhatsApp startup error: ${error.message}`
-        );
+        res.status(500).json({
+            ok: false,
+            error: error.message
+        });
+    }
+});
 
-        broadcastState();
+/* =====================================================
+   JSON PASTE
+===================================================== */
 
-        if (reconnectTimer) {
-            clearTimeout(reconnectTimer);
+app.post("/api/json/paste", (req, res) => {
+    try {
+        const raw = String(req.body.json || "").trim();
+
+        if (!raw) {
+            return res.status(400).json({
+                ok: false,
+                error: "JSON empty hai."
+            });
         }
 
-        reconnectTimer = setTimeout(() => {
-            connectToWhatsApp();
+        const parsed = JSON.parse(raw);
+
+        if (
+            parsed === null ||
+            typeof parsed !== "object"
+        ) {
+            return res.status(400).json({
+                ok: false,
+                error: "Valid JSON object/array required."
+            });
+        }
+
+        jsonLoaded = true;
+
+        log("[JSON] JSON validated successfully.");
+
+        broadcast();
+
+        res.json({
+            ok: true,
+            message: "JSON loaded successfully."
+        });
+
+    } catch (error) {
+        res.status(400).json({
+            ok: false,
+            error: "Invalid JSON."
+        });
+    }
+});
+
+/* =====================================================
+   JSON FILE UPLOAD
+===================================================== */
+
+app.post(
+    "/api/json/upload",
+    upload.single("jsonFile"),
+    (req, res) => {
+
+        try {
+            if (!req.file) {
+                return res.status(400).json({
+                    ok: false,
+                    error: "JSON file select karo."
+                });
+            }
+
+            const text =
+                req.file.buffer.toString("utf8");
+
+            const parsed = JSON.parse(text);
+
+            if (
+                parsed === null ||
+                typeof parsed !== "object"
+            ) {
+                return res.status(400).json({
+                    ok: false,
+                    error: "Invalid JSON structure."
+                });
+            }
+
+            jsonLoaded = true;
+
+            log(
+                `[JSON] File loaded: ${req.file.originalname}`
+            );
+
+            broadcast();
+
+            res.json({
+                ok: true,
+                message: "JSON file validated successfully."
+            });
+
+        } catch (error) {
+
+            res.status(400).json({
+                ok: false,
+                error: "File me valid JSON nahi hai."
+            });
+        }
+    }
+);
+
+/* =====================================================
+   CLEAR JSON STATUS
+===================================================== */
+
+app.post("/api/json/clear", (req, res) => {
+
+    jsonLoaded = false;
+
+    log("[JSON] JSON status cleared.");
+
+    broadcast();
+
+    res.json({
+        ok: true
+    });
+});
+
+/* =====================================================
+   SEND SINGLE MESSAGE
+===================================================== */
+
+app.post("/api/message", async (req, res) => {
+
+    try {
+
+        if (!connected || !sock) {
+            return res.status(400).json({
+                ok: false,
+                error: "WhatsApp connected nahi hai."
+            });
+        }
+
+        let recipient =
+            String(req.body.recipient || "")
+                .replace(/[^\d@g.-]/g, "");
+
+        const message =
+            String(req.body.message || "").trim();
+
+        const header =
+            String(req.body.header || "").trim();
+
+        if (!recipient) {
+            return res.status(400).json({
+                ok: false,
+                error: "Recipient / Group UID required."
+            });
+        }
+
+        if (!message) {
+            return res.status(400).json({
+                ok: false,
+                error: "Message required."
+            });
+        }
+
+        let jid = recipient;
+
+        /*
+         * Normal phone number:
+         * 919876543210
+         *
+         * Group JID:
+         * 1234567890-123456789@g.us
+         */
+
+        if (!jid.includes("@")) {
+            jid = `${jid}@s.whatsapp.net`;
+        }
+
+        const finalMessage =
+            header
+                ? `${header}\n\n${message}`
+                : message;
+
+        await sock.sendMessage(jid, {
+            text: finalMessage
+        });
+
+        sentCount++;
+
+        log("[MESSAGE] Message sent.");
+
+        broadcast();
+
+        res.json({
+            ok: true,
+            message: "Message sent."
+        });
+
+    } catch (error) {
+
+        failedCount++;
+
+        log("[MESSAGE] Sending failed.");
+
+        broadcast();
+
+        res.status(500).json({
+            ok: false,
+            error: error.message
+        });
+    }
+});
+
+/* =====================================================
+   WHATSAPP
+===================================================== */
+
+async function startWhatsApp() {
+
+    if (connecting) return;
+
+    connecting = true;
+
+    broadcast();
+
+    try {
+
+        const {
+            state,
+            saveCreds
+        } = await useMultiFileAuthState(
+            path.join(__dirname, "auth_info_baileys")
+        );
+
+        sock = makeWASocket({
+            auth: state,
+            printQRInTerminal: false,
+            browser: [
+                "RK RAJA XWD",
+                "Chrome",
+                "1.0.0"
+            ]
+        });
+
+        sock.ev.on(
+            "creds.update",
+            saveCreds
+        );
+
+        sock.ev.on(
+            "connection.update",
+            async update => {
+
+                const {
+                    connection,
+                    lastDisconnect
+                } = update;
+
+                if (connection === "open") {
+
+                    connected = true;
+                    connecting = false;
+                    pairingCode = null;
+
+                    log(
+                        "[WHATSAPP] Connection ONLINE."
+                    );
+
+                    broadcast();
+                }
+
+                if (connection === "close") {
+
+                    connected = false;
+                    connecting = false;
+                    pairingCode = null;
+
+                    const code =
+                        lastDisconnect?.error instanceof Boom
+                            ? lastDisconnect.error.output.statusCode
+                            : null;
+
+                    if (
+                        code ===
+                        DisconnectReason.loggedOut
+                    ) {
+
+                        log(
+                            "[WHATSAPP] Session logged out."
+                        );
+
+                        sock = null;
+
+                    } else {
+
+                        log(
+                            "[WHATSAPP] Connection closed. Reconnecting..."
+                        );
+
+                        sock = null;
+
+                        setTimeout(() => {
+                            startWhatsApp();
+                        }, 5000);
+                    }
+
+                    broadcast();
+                }
+            }
+        );
+
+        log(
+            "[BAILEYS] Authentication state loaded."
+        );
+
+        connecting = false;
+
+        broadcast();
+
+    } catch (error) {
+
+        connecting = false;
+        sock = null;
+
+        log(
+            "[ERROR] WhatsApp startup failed."
+        );
+
+        broadcast();
+
+        setTimeout(() => {
+            startWhatsApp();
         }, 10000);
     }
 }
 
-// =====================================================
-// START SERVER
-// =====================================================
+/* =====================================================
+   START
+===================================================== */
 
-app.listen(PORT, "0.0.0.0", () => {
-    console.log("========================================");
-    console.log("       RK RAJA XWD SERVER");
-    console.log("========================================");
-    console.log(`PORT: ${PORT}`);
+app.listen(
+    PORT,
+    "0.0.0.0",
+    () => {
 
-    addLog(`[SERVER] Listening on port ${PORT}`);
-    addLog("[SERVER] Dashboard ready.");
+        console.log(
+            `RK RAJA XWD running on port ${PORT}`
+        );
 
-    connectToWhatsApp();
-});
+        log("[SERVER] Dashboard ready.");
+
+        startWhatsApp();
+    }
+);
